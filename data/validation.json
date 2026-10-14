@@ -1,0 +1,106 @@
+{
+  "benchmarks": {
+    "2021": "All 24 hourly BLS Table A-3 sleeping percentages match.",
+    "2022": "All 24 hourly BLS Table A-3 sleeping percentages match.",
+    "2023": "All 24 hourly BLS Table A-3 sleeping percentages match.",
+    "2024": "All 24 hourly BLS Table A-3 sleeping percentages match.",
+    "2025": "Average sleep 9.03 hours/day matches BLS."
+  },
+  "years": {
+    "2003": {
+      "diaries": 20720,
+      "averagePopulation": 225290907
+    },
+    "2004": {
+      "diaries": 13973,
+      "averagePopulation": 227481690
+    },
+    "2005": {
+      "diaries": 13038,
+      "averagePopulation": 230427482
+    },
+    "2006": {
+      "diaries": 12943,
+      "averagePopulation": 233122400
+    },
+    "2007": {
+      "diaries": 12248,
+      "averagePopulation": 236105785
+    },
+    "2008": {
+      "diaries": 12723,
+      "averagePopulation": 238007118
+    },
+    "2009": {
+      "diaries": 13133,
+      "averagePopulation": 239898190
+    },
+    "2010": {
+      "diaries": 13260,
+      "averagePopulation": 241913480
+    },
+    "2011": {
+      "diaries": 12479,
+      "averagePopulation": 243651203
+    },
+    "2012": {
+      "diaries": 12443,
+      "averagePopulation": 247385527
+    },
+    "2013": {
+      "diaries": 11385,
+      "averagePopulation": 249810848
+    },
+    "2014": {
+      "diaries": 11592,
+      "averagePopulation": 252086923
+    },
+    "2015": {
+      "diaries": 10905,
+      "averagePopulation": 255023486
+    },
+    "2016": {
+      "diaries": 10493,
+      "averagePopulation": 257745878
+    },
+    "2017": {
+      "diaries": 10223,
+      "averagePopulation": 259204264
+    },
+    "2018": {
+      "diaries": 9593,
+      "averagePopulation": 261895319
+    },
+    "2019": {
+      "diaries": 9435,
+      "averagePopulation": 263362365
+    },
+    "2020": {
+      "diaries": 8782,
+      "averagePopulation": 264561703
+    },
+    "2021": {
+      "diaries": 9087,
+      "averagePopulation": 265629666
+    },
+    "2022": {
+      "diaries": 8136,
+      "averagePopulation": 268366502
+    },
+    "2023": {
+      "diaries": 8548,
+      "averagePopulation": 271336907
+    },
+    "2024": {
+      "diaries": 7669,
+      "averagePopulation": 272912483
+    },
+    "2025": {
+      "diaries": 6146,
+      "averagePopulation": 277984657
+    }
+  },
+  "startTimeTypos": [
+    "20161008161668 activity 9"
+  ]
+}

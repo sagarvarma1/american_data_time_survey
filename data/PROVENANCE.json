@@ -1,0 +1,21 @@
+{
+  "original_source": "https://www.bls.gov/tus/data/datafiles-0325.htm",
+  "retrieval": "Downloaded directly from bls.gov in a browser on 2026-10-14 (BLS rejects command-line downloads). Files as published June 2026.",
+  "files": {
+    "atusact-0325.zip": "https://www.bls.gov/tus/datafiles/atusact-0325.zip",
+    "atusresp-0325.zip": "https://www.bls.gov/tus/datafiles/atusresp-0325.zip",
+    "atussum-0325.zip": "https://www.bls.gov/tus/datafiles/atussum-0325.zip",
+    "atusrost-0325.zip": "https://www.bls.gov/tus/datafiles/atusrost-0325.zip",
+    "atuswho-0325.zip": "https://www.bls.gov/tus/datafiles/atuswho-0325.zip",
+    "lexiconnoex0325.pdf": "https://www.bls.gov/tus/lexicons/lexiconnoex0325.pdf",
+    "atusintcodebk0325.pdf": "https://www.bls.gov/tus/dictionaries/atusintcodebk0325.pdf"
+  },
+  "used_files_sha256": {
+    "summary": "6a5c9572d52d040456c8f6cb39107bc7682ac8fcf4bf33da87cdfd5967adf6ac",
+    "activity": "80a2941915af5fe4f4c10de665b1e520208e88c672bb666b63830243c9fa5b59",
+    "who": "0799b76e029031075e40c12f17f8828a0ba0b774fc0365b17eb0d6b0827bd892"
+  },
+  "labels": "activity-labels.csv (archived 2021 code list) for 400 codes; harmonized-labels.csv, transcribed from the 2003–2025 lexicon, for 26 pooled codes.",
+  "validation": "See validation.json: BLS Table A-3 hourly sleeping for 2021–2024 and the published 2025 average sleep (9.03 hours) are reproduced.",
+  "superseded": "additional-sources.json and data/raw/*.csv describe the earlier 2021–2024 edition built from GitHub archives; they are no longer used by the build."
+}

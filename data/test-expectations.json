@@ -1,0 +1,1850 @@
+{
+ "everyone": {
+  "filters": {
+   "years": [
+    2003,
+    2025
+   ],
+   "day": "all"
+  },
+  "days": 8348,
+  "population": 251360334.2831742,
+  "sample": 258954,
+  "points": [
+   {
+    "activity": "sleep",
+    "minute": 0,
+    "people": 210193479.3465866,
+    "diaries": 217230
+   },
+   {
+    "activity": "sleep",
+    "minute": 240,
+    "people": 229536622.35536972,
+    "diaries": 238113
+   },
+   {
+    "activity": "sleep",
+    "minute": 450,
+    "people": 90018377.68597782,
+    "diaries": 98961
+   },
+   {
+    "activity": "sleep",
+    "minute": 720,
+    "people": 8918680.603314074,
+    "diaries": 8756
+   },
+   {
+    "activity": "sleep",
+    "minute": 1125,
+    "people": 7233257.518552952,
+    "diaries": 6918
+   },
+   {
+    "activity": "sleep",
+    "minute": 1439,
+    "people": 199367547.62819767,
+    "diaries": 205962
+   },
+   {
+    "activity": "drive",
+    "minute": 0,
+    "people": 2122219.2895966587,
+    "diaries": 2161
+   },
+   {
+    "activity": "drive",
+    "minute": 240,
+    "people": 1096997.4559243852,
+    "diaries": 933
+   },
+   {
+    "activity": "drive",
+    "minute": 450,
+    "people": 17204404.283762377,
+    "diaries": 15267
+   },
+   {
+    "activity": "drive",
+    "minute": 720,
+    "people": 17893006.15796628,
+    "diaries": 20019
+   },
+   {
+    "activity": "drive",
+    "minute": 1125,
+    "people": 11690537.663268086,
+    "diaries": 11931
+   },
+   {
+    "activity": "drive",
+    "minute": 1439,
+    "people": 1416513.3727847014,
+    "diaries": 1458
+   },
+   {
+    "activity": "work",
+    "minute": 0,
+    "people": 4688548.610184265,
+    "diaries": 4478
+   },
+   {
+    "activity": "work",
+    "minute": 240,
+    "people": 4654418.919063387,
+    "diaries": 4174
+   },
+   {
+    "activity": "work",
+    "minute": 450,
+    "people": 40648741.44381363,
+    "diaries": 32234
+   },
+   {
+    "activity": "work",
+    "minute": 720,
+    "people": 58064107.63574395,
+    "diaries": 47242
+   },
+   {
+    "activity": "work",
+    "minute": 1125,
+    "people": 20169411.82549187,
+    "diaries": 17149
+   },
+   {
+    "activity": "work",
+    "minute": 1439,
+    "people": 5774306.77142466,
+    "diaries": 5494
+   },
+   {
+    "activity": "household_020102",
+    "minute": 0,
+    "people": 159540.14125308843,
+    "diaries": 210
+   },
+   {
+    "activity": "household_020102",
+    "minute": 240,
+    "people": 96479.03492866196,
+    "diaries": 125
+   },
+   {
+    "activity": "household_020102",
+    "minute": 450,
+    "people": 1814240.6042141041,
+    "diaries": 2279
+   },
+   {
+    "activity": "household_020102",
+    "minute": 720,
+    "people": 3304694.127838675,
+    "diaries": 4063
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1125,
+    "people": 2102931.9557063575,
+    "diaries": 2418
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1439,
+    "people": 202290.6801231431,
+    "diaries": 255
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 0,
+    "people": 11541784.21236616,
+    "diaries": 12205
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 240,
+    "people": 2064444.3278075443,
+    "diaries": 2212
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 450,
+    "people": 9827584.330774756,
+    "diaries": 10972
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 720,
+    "people": 20116701.89581982,
+    "diaries": 22909
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1125,
+    "people": 60908417.58536075,
+    "diaries": 66041
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1439,
+    "people": 18693368.87788454,
+    "diaries": 19953
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 0,
+    "people": 92159.64608324812,
+    "diaries": 81
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 240,
+    "people": 23657.13162774653,
+    "diaries": 22
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 450,
+    "people": 260756.06043538506,
+    "diaries": 299
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 720,
+    "people": 1683748.9496773372,
+    "diaries": 1838
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1125,
+    "people": 894327.9062699139,
+    "diaries": 920
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1439,
+    "people": 90882.81603841748,
+    "diaries": 69
+   }
+  ]
+ },
+ "covid-2020-weekend": {
+  "filters": {
+   "years": [
+    2020,
+    2020
+   ],
+   "day": "weekend"
+  },
+  "days": 89,
+  "population": 264558189.26749977,
+  "sample": 4359,
+  "points": [
+   {
+    "activity": "sleep",
+    "minute": 0,
+    "people": 222881595.42605475,
+    "diaries": 3730
+   },
+   {
+    "activity": "sleep",
+    "minute": 240,
+    "people": 246453517.0752901,
+    "diaries": 4047
+   },
+   {
+    "activity": "sleep",
+    "minute": 450,
+    "people": 145415551.02475673,
+    "diaries": 2218
+   },
+   {
+    "activity": "sleep",
+    "minute": 720,
+    "people": 12104391.956649907,
+    "diaries": 177
+   },
+   {
+    "activity": "sleep",
+    "minute": 1125,
+    "people": 8025264.866589596,
+    "diaries": 124
+   },
+   {
+    "activity": "sleep",
+    "minute": 1439,
+    "people": 209732983.34770605,
+    "diaries": 3523
+   },
+   {
+    "activity": "drive",
+    "minute": 0,
+    "people": 1245363.9815802022,
+    "diaries": 18
+   },
+   {
+    "activity": "drive",
+    "minute": 240,
+    "people": 832613.9872488203,
+    "diaries": 16
+   },
+   {
+    "activity": "drive",
+    "minute": 450,
+    "people": 5132870.225371281,
+    "diaries": 90
+   },
+   {
+    "activity": "drive",
+    "minute": 720,
+    "people": 16465141.09679323,
+    "diaries": 272
+   },
+   {
+    "activity": "drive",
+    "minute": 1125,
+    "people": 8761721.197949082,
+    "diaries": 143
+   },
+   {
+    "activity": "drive",
+    "minute": 1439,
+    "people": 868034.0576058314,
+    "diaries": 12
+   },
+   {
+    "activity": "work",
+    "minute": 0,
+    "people": 3198610.283406539,
+    "diaries": 49
+   },
+   {
+    "activity": "work",
+    "minute": 240,
+    "people": 2579295.1451411904,
+    "diaries": 39
+   },
+   {
+    "activity": "work",
+    "minute": 450,
+    "people": 10952308.381477702,
+    "diaries": 178
+   },
+   {
+    "activity": "work",
+    "minute": 720,
+    "people": 20622388.704450727,
+    "diaries": 309
+   },
+   {
+    "activity": "work",
+    "minute": 1125,
+    "people": 10037760.814874573,
+    "diaries": 156
+   },
+   {
+    "activity": "work",
+    "minute": 1439,
+    "people": 3734038.3773777634,
+    "diaries": 52
+   },
+   {
+    "activity": "household_020102",
+    "minute": 0,
+    "people": 469017.87962774164,
+    "diaries": 6
+   },
+   {
+    "activity": "household_020102",
+    "minute": 240,
+    "people": 131713.77568610114,
+    "diaries": 3
+   },
+   {
+    "activity": "household_020102",
+    "minute": 450,
+    "people": 2195104.2188453265,
+    "diaries": 42
+   },
+   {
+    "activity": "household_020102",
+    "minute": 720,
+    "people": 4232891.178554955,
+    "diaries": 75
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1125,
+    "people": 1908455.7451827417,
+    "diaries": 42
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1439,
+    "people": 251505.01934695503,
+    "diaries": 4
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 0,
+    "people": 14083356.77975173,
+    "diaries": 215
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 240,
+    "people": 2141653.136307078,
+    "diaries": 42
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 450,
+    "people": 13218453.501433335,
+    "diaries": 243
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 720,
+    "people": 33167306.49426926,
+    "diaries": 564
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1125,
+    "people": 80480939.04956137,
+    "diaries": 1363
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1439,
+    "people": 21922288.200865597,
+    "diaries": 349
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 0,
+    "people": 119654.81142540449,
+    "diaries": 2
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 450,
+    "people": 488025.1379455169,
+    "diaries": 8
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 720,
+    "people": 2088466.6533545845,
+    "diaries": 34
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1125,
+    "people": 896634.7276758091,
+    "diaries": 15
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1439,
+    "people": 110502.23807119101,
+    "diaries": 2
+   }
+  ]
+ },
+ "early-weekday-women": {
+  "filters": {
+   "years": [
+    2003,
+    2005
+   ],
+   "day": "weekday",
+   "sex": 1
+  },
+  "days": 783,
+  "population": 117790719.30631857,
+  "sample": 13402,
+  "points": [
+   {
+    "activity": "sleep",
+    "minute": 0,
+    "people": 98853338.11433074,
+    "diaries": 11382
+   },
+   {
+    "activity": "sleep",
+    "minute": 240,
+    "people": 109280913.28847283,
+    "diaries": 12422
+   },
+   {
+    "activity": "sleep",
+    "minute": 450,
+    "people": 32597180.479324598,
+    "diaries": 3435
+   },
+   {
+    "activity": "sleep",
+    "minute": 720,
+    "people": 3156450.7678966476,
+    "diaries": 330
+   },
+   {
+    "activity": "sleep",
+    "minute": 1125,
+    "people": 2760980.3918948807,
+    "diaries": 290
+   },
+   {
+    "activity": "sleep",
+    "minute": 1439,
+    "people": 93802658.41374065,
+    "diaries": 10833
+   },
+   {
+    "activity": "drive",
+    "minute": 0,
+    "people": 998255.1695299476,
+    "diaries": 81
+   },
+   {
+    "activity": "drive",
+    "minute": 240,
+    "people": 204417.52720495278,
+    "diaries": 22
+   },
+   {
+    "activity": "drive",
+    "minute": 450,
+    "people": 9896700.81842769,
+    "diaries": 1254
+   },
+   {
+    "activity": "drive",
+    "minute": 720,
+    "people": 7567077.625521439,
+    "diaries": 934
+   },
+   {
+    "activity": "drive",
+    "minute": 1125,
+    "people": 5315563.4882008815,
+    "diaries": 644
+   },
+   {
+    "activity": "drive",
+    "minute": 1439,
+    "people": 578732.1025826372,
+    "diaries": 53
+   },
+   {
+    "activity": "work",
+    "minute": 0,
+    "people": 1996717.531601692,
+    "diaries": 217
+   },
+   {
+    "activity": "work",
+    "minute": 240,
+    "people": 1506767.9631192612,
+    "diaries": 168
+   },
+   {
+    "activity": "work",
+    "minute": 450,
+    "people": 17635730.504758704,
+    "diaries": 1963
+   },
+   {
+    "activity": "work",
+    "minute": 720,
+    "people": 31179145.01441635,
+    "diaries": 3621
+   },
+   {
+    "activity": "work",
+    "minute": 1125,
+    "people": 9511635.121863825,
+    "diaries": 996
+   },
+   {
+    "activity": "work",
+    "minute": 1439,
+    "people": 2527481.126689689,
+    "diaries": 264
+   },
+   {
+    "activity": "household_020102",
+    "minute": 0,
+    "people": 130135.30418717243,
+    "diaries": 17
+   },
+   {
+    "activity": "household_020102",
+    "minute": 240,
+    "people": 96715.40780018772,
+    "diaries": 14
+   },
+   {
+    "activity": "household_020102",
+    "minute": 450,
+    "people": 1834325.66516515,
+    "diaries": 202
+   },
+   {
+    "activity": "household_020102",
+    "minute": 720,
+    "people": 2247581.3914985433,
+    "diaries": 244
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1125,
+    "people": 1550941.20074785,
+    "diaries": 192
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1439,
+    "people": 112066.9143583129,
+    "diaries": 15
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 0,
+    "people": 4800897.7755250195,
+    "diaries": 535
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 240,
+    "people": 555221.5273899141,
+    "diaries": 74
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 450,
+    "people": 3538058.8344349964,
+    "diaries": 400
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 720,
+    "people": 6699998.937838219,
+    "diaries": 782
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1125,
+    "people": 23773678.41339222,
+    "diaries": 2654
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1439,
+    "people": 8327541.475935666,
+    "diaries": 914
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 0,
+    "people": 19949.498098532567,
+    "diaries": 3
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 450,
+    "people": 172776.68139839973,
+    "diaries": 20
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 720,
+    "people": 808132.6729435924,
+    "diaries": 85
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1125,
+    "people": 519924.0709774266,
+    "diaries": 60
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1439,
+    "people": 7424.822444357599,
+    "diaries": 1
+   }
+  ]
+ },
+ "2025-young-full-time": {
+  "filters": {
+   "years": [
+    2025,
+    2025
+   ],
+   "day": "all",
+   "age": 1,
+   "employment": 0
+  },
+  "days": 365,
+  "population": 32220047.494786154,
+  "sample": 562,
+  "points": [
+   {
+    "activity": "sleep",
+    "minute": 0,
+    "people": 26778964.072234385,
+    "diaries": 480
+   },
+   {
+    "activity": "sleep",
+    "minute": 240,
+    "people": 29408689.64795862,
+    "diaries": 519
+   },
+   {
+    "activity": "sleep",
+    "minute": 450,
+    "people": 11182548.485268312,
+    "diaries": 224
+   },
+   {
+    "activity": "sleep",
+    "minute": 720,
+    "people": 1252435.793228085,
+    "diaries": 18
+   },
+   {
+    "activity": "sleep",
+    "minute": 1125,
+    "people": 968458.9409370301,
+    "diaries": 15
+   },
+   {
+    "activity": "sleep",
+    "minute": 1439,
+    "people": 25607654.407651577,
+    "diaries": 464
+   },
+   {
+    "activity": "drive",
+    "minute": 0,
+    "people": 316901.6291974247,
+    "diaries": 6
+   },
+   {
+    "activity": "drive",
+    "minute": 240,
+    "people": 206667.4262518219,
+    "diaries": 5
+   },
+   {
+    "activity": "drive",
+    "minute": 450,
+    "people": 2963155.3897466413,
+    "diaries": 33
+   },
+   {
+    "activity": "drive",
+    "minute": 720,
+    "people": 1422090.0921290056,
+    "diaries": 32
+   },
+   {
+    "activity": "drive",
+    "minute": 1125,
+    "people": 1174015.60653506,
+    "diaries": 24
+   },
+   {
+    "activity": "drive",
+    "minute": 1439,
+    "people": 195447.66541775622,
+    "diaries": 4
+   },
+   {
+    "activity": "work",
+    "minute": 0,
+    "people": 327291.28943736723,
+    "diaries": 7
+   },
+   {
+    "activity": "work",
+    "minute": 240,
+    "people": 909091.4302712767,
+    "diaries": 12
+   },
+   {
+    "activity": "work",
+    "minute": 450,
+    "people": 7969208.677712879,
+    "diaries": 114
+   },
+   {
+    "activity": "work",
+    "minute": 720,
+    "people": 12291621.909060739,
+    "diaries": 171
+   },
+   {
+    "activity": "work",
+    "minute": 1125,
+    "people": 3681222.1956410166,
+    "diaries": 50
+   },
+   {
+    "activity": "work",
+    "minute": 1439,
+    "people": 385963.9582347534,
+    "diaries": 7
+   },
+   {
+    "activity": "household_020102",
+    "minute": 0,
+    "people": 30412.124405545204,
+    "diaries": 1
+   },
+   {
+    "activity": "household_020102",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "household_020102",
+    "minute": 450,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "household_020102",
+    "minute": 720,
+    "people": 293712.7577589096,
+    "diaries": 8
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1125,
+    "people": 251684.6422764356,
+    "diaries": 6
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1439,
+    "people": 30412.124405545204,
+    "diaries": 1
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 0,
+    "people": 1087427.1363654411,
+    "diaries": 17
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 450,
+    "people": 703906.7292404439,
+    "diaries": 15
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 720,
+    "people": 1800007.522140926,
+    "diaries": 39
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1125,
+    "people": 5073197.780395362,
+    "diaries": 102
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1439,
+    "people": 1708396.6822078,
+    "diaries": 28
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 0,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 450,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 720,
+    "people": 270677.8144893151,
+    "diaries": 5
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1125,
+    "people": 161081.10486173152,
+    "diaries": 2
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1439,
+    "people": 0.0,
+    "diaries": 0
+   }
+  ]
+ },
+ "2010s-young-kids-at-home": {
+  "filters": {
+   "years": [
+    2010,
+    2019
+   ],
+   "day": "all",
+   "kids": 1,
+   "where": 1
+  },
+  "days": 3652,
+  "population": 38631428.26515674,
+  "sample": 19868,
+  "points": [
+   {
+    "activity": "sleep",
+    "minute": 0,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 450,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 720,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 1125,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 1439,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "drive",
+    "minute": 0,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "drive",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "drive",
+    "minute": 450,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "drive",
+    "minute": 720,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "drive",
+    "minute": 1125,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "drive",
+    "minute": 1439,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "work",
+    "minute": 0,
+    "people": 124900.71785473326,
+    "diaries": 82
+   },
+   {
+    "activity": "work",
+    "minute": 240,
+    "people": 84157.59965664157,
+    "diaries": 41
+   },
+   {
+    "activity": "work",
+    "minute": 450,
+    "people": 565425.6654413888,
+    "diaries": 267
+   },
+   {
+    "activity": "work",
+    "minute": 720,
+    "people": 779019.455387636,
+    "diaries": 356
+   },
+   {
+    "activity": "work",
+    "minute": 1125,
+    "people": 407194.0383838419,
+    "diaries": 206
+   },
+   {
+    "activity": "work",
+    "minute": 1439,
+    "people": 182284.37256586837,
+    "diaries": 118
+   },
+   {
+    "activity": "household_020102",
+    "minute": 0,
+    "people": 39270.81466461884,
+    "diaries": 24
+   },
+   {
+    "activity": "household_020102",
+    "minute": 240,
+    "people": 9001.418640635817,
+    "diaries": 4
+   },
+   {
+    "activity": "household_020102",
+    "minute": 450,
+    "people": 206115.92907819903,
+    "diaries": 146
+   },
+   {
+    "activity": "household_020102",
+    "minute": 720,
+    "people": 525928.2254698927,
+    "diaries": 289
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1125,
+    "people": 304522.4627919277,
+    "diaries": 185
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1439,
+    "people": 52456.91240675164,
+    "diaries": 31
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 0,
+    "people": 1320182.6018184966,
+    "diaries": 628
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 240,
+    "people": 157189.3571126955,
+    "diaries": 78
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 450,
+    "people": 981534.4534125458,
+    "diaries": 551
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 720,
+    "people": 2318132.585072508,
+    "diaries": 1198
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1125,
+    "people": 5893900.313554443,
+    "diaries": 2958
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1439,
+    "people": 2170395.962642297,
+    "diaries": 1041
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 0,
+    "people": 6561.646706366649,
+    "diaries": 2
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 450,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 720,
+    "people": 3647.278714407174,
+    "diaries": 3
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1125,
+    "people": 14891.708436353776,
+    "diaries": 8
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1439,
+    "people": 3521.158911741785,
+    "diaries": 2
+   }
+  ]
+ },
+ "weekend-with-friends": {
+  "filters": {
+   "years": [
+    2003,
+    2025
+   ],
+   "day": "weekend",
+   "who": 4
+  },
+  "days": 2385,
+  "population": 251362751.21952003,
+  "sample": 129608,
+  "points": [
+   {
+    "activity": "sleep",
+    "minute": 0,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 450,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 720,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 1125,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 1439,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "drive",
+    "minute": 0,
+    "people": 292846.2032735448,
+    "diaries": 130
+   },
+   {
+    "activity": "drive",
+    "minute": 240,
+    "people": 40169.578787463324,
+    "diaries": 20
+   },
+   {
+    "activity": "drive",
+    "minute": 450,
+    "people": 170523.28476678868,
+    "diaries": 107
+   },
+   {
+    "activity": "drive",
+    "minute": 720,
+    "people": 910769.8449820065,
+    "diaries": 480
+   },
+   {
+    "activity": "drive",
+    "minute": 1125,
+    "people": 714263.9495394271,
+    "diaries": 359
+   },
+   {
+    "activity": "drive",
+    "minute": 1439,
+    "people": 241981.6347413414,
+    "diaries": 101
+   },
+   {
+    "activity": "work",
+    "minute": 0,
+    "people": 39046.119705521596,
+    "diaries": 15
+   },
+   {
+    "activity": "work",
+    "minute": 240,
+    "people": 18209.232492992032,
+    "diaries": 4
+   },
+   {
+    "activity": "work",
+    "minute": 450,
+    "people": 121610.86271436398,
+    "diaries": 56
+   },
+   {
+    "activity": "work",
+    "minute": 720,
+    "people": 278299.9258385794,
+    "diaries": 127
+   },
+   {
+    "activity": "work",
+    "minute": 1125,
+    "people": 165065.11547991403,
+    "diaries": 73
+   },
+   {
+    "activity": "work",
+    "minute": 1439,
+    "people": 47520.25673880084,
+    "diaries": 19
+   },
+   {
+    "activity": "household_020102",
+    "minute": 0,
+    "people": 821.9740232012579,
+    "diaries": 1
+   },
+   {
+    "activity": "household_020102",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "household_020102",
+    "minute": 450,
+    "people": 1515.7920293660377,
+    "diaries": 2
+   },
+   {
+    "activity": "household_020102",
+    "minute": 720,
+    "people": 16678.432297648636,
+    "diaries": 12
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1125,
+    "people": 9483.674334464571,
+    "diaries": 5
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1439,
+    "people": 821.9740232012579,
+    "diaries": 1
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 0,
+    "people": 823668.2755415968,
+    "diaries": 390
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 240,
+    "people": 44784.40437564234,
+    "diaries": 23
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 450,
+    "people": 107828.52842124361,
+    "diaries": 64
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 720,
+    "people": 1019528.4921552142,
+    "diaries": 458
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1125,
+    "people": 2812260.931752391,
+    "diaries": 1428
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1439,
+    "people": 1256938.4372720832,
+    "diaries": 598
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 0,
+    "people": 54595.856642266255,
+    "diaries": 17
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 240,
+    "people": 2641.7647066561844,
+    "diaries": 2
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 450,
+    "people": 40582.29025914549,
+    "diaries": 21
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 720,
+    "people": 313508.4794427342,
+    "diaries": 142
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1125,
+    "people": 143191.91362828133,
+    "diaries": 69
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1439,
+    "people": 42890.1686998067,
+    "diaries": 14
+   }
+  ]
+ },
+ "retired-age-alone": {
+  "filters": {
+   "years": [
+    2015,
+    2025
+   ],
+   "day": "weekday",
+   "age": 5,
+   "who": 0
+  },
+  "days": 2832,
+  "population": 31957934.014095366,
+  "sample": 8481,
+  "points": [
+   {
+    "activity": "sleep",
+    "minute": 0,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 450,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 720,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 1125,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "sleep",
+    "minute": 1439,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "drive",
+    "minute": 0,
+    "people": 45242.29452984712,
+    "diaries": 15
+   },
+   {
+    "activity": "drive",
+    "minute": 240,
+    "people": 90090.6328482387,
+    "diaries": 19
+   },
+   {
+    "activity": "drive",
+    "minute": 450,
+    "people": 1085706.1746717205,
+    "diaries": 287
+   },
+   {
+    "activity": "drive",
+    "minute": 720,
+    "people": 1629051.7469549573,
+    "diaries": 455
+   },
+   {
+    "activity": "drive",
+    "minute": 1125,
+    "people": 629597.3301740737,
+    "diaries": 184
+   },
+   {
+    "activity": "drive",
+    "minute": 1439,
+    "people": 29475.172613933966,
+    "diaries": 10
+   },
+   {
+    "activity": "work",
+    "minute": 0,
+    "people": 89517.28717277684,
+    "diaries": 22
+   },
+   {
+    "activity": "work",
+    "minute": 240,
+    "people": 94857.33959699188,
+    "diaries": 29
+   },
+   {
+    "activity": "work",
+    "minute": 450,
+    "people": 1051931.0904695876,
+    "diaries": 276
+   },
+   {
+    "activity": "work",
+    "minute": 720,
+    "people": 1461105.8995064942,
+    "diaries": 388
+   },
+   {
+    "activity": "work",
+    "minute": 1125,
+    "people": 426159.23810079205,
+    "diaries": 133
+   },
+   {
+    "activity": "work",
+    "minute": 1439,
+    "people": 107742.18732762571,
+    "diaries": 28
+   },
+   {
+    "activity": "household_020102",
+    "minute": 0,
+    "people": 12618.052719663488,
+    "diaries": 4
+   },
+   {
+    "activity": "household_020102",
+    "minute": 240,
+    "people": 20383.369068974578,
+    "diaries": 6
+   },
+   {
+    "activity": "household_020102",
+    "minute": 450,
+    "people": 314718.1912532613,
+    "diaries": 91
+   },
+   {
+    "activity": "household_020102",
+    "minute": 720,
+    "people": 517854.5000634629,
+    "diaries": 147
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1125,
+    "people": 195515.88374681608,
+    "diaries": 58
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1439,
+    "people": 7609.417365469985,
+    "diaries": 3
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 0,
+    "people": 1162814.8839946203,
+    "diaries": 343
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 240,
+    "people": 471848.66331606003,
+    "diaries": 134
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 450,
+    "people": 1893888.1342309285,
+    "diaries": 541
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 720,
+    "people": 2637392.2859537452,
+    "diaries": 747
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1125,
+    "people": 6072854.536879862,
+    "diaries": 1855
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1439,
+    "people": 1835159.1297621047,
+    "diaries": 545
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 0,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 240,
+    "people": 0.0,
+    "diaries": 0
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 450,
+    "people": 12093.015459795552,
+    "diaries": 3
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 720,
+    "people": 34712.904702116175,
+    "diaries": 13
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1125,
+    "people": 27687.0264157041,
+    "diaries": 4
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1439,
+    "people": 0.0,
+    "diaries": 0
+   }
+  ]
+ },
+ "post-pandemic": {
+  "filters": {
+   "years": [
+    2021,
+    2024
+   ],
+   "day": "all"
+  },
+  "days": 1461,
+  "population": 269563683.1331417,
+  "sample": 33440,
+  "points": [
+   {
+    "activity": "sleep",
+    "minute": 0,
+    "people": 231068883.8864766,
+    "diaries": 28932
+   },
+   {
+    "activity": "sleep",
+    "minute": 240,
+    "people": 246981662.9141374,
+    "diaries": 30806
+   },
+   {
+    "activity": "sleep",
+    "minute": 450,
+    "people": 99852389.43283246,
+    "diaries": 12879
+   },
+   {
+    "activity": "sleep",
+    "minute": 720,
+    "people": 9623842.77000575,
+    "diaries": 1086
+   },
+   {
+    "activity": "sleep",
+    "minute": 1125,
+    "people": 8599173.22523002,
+    "diaries": 908
+   },
+   {
+    "activity": "sleep",
+    "minute": 1439,
+    "people": 220615156.08272156,
+    "diaries": 27662
+   },
+   {
+    "activity": "drive",
+    "minute": 0,
+    "people": 1630301.974478812,
+    "diaries": 181
+   },
+   {
+    "activity": "drive",
+    "minute": 240,
+    "people": 963360.4993984244,
+    "diaries": 110
+   },
+   {
+    "activity": "drive",
+    "minute": 450,
+    "people": 16387631.180752266,
+    "diaries": 1677
+   },
+   {
+    "activity": "drive",
+    "minute": 720,
+    "people": 17183772.029455636,
+    "diaries": 2357
+   },
+   {
+    "activity": "drive",
+    "minute": 1125,
+    "people": 11257460.88015111,
+    "diaries": 1249
+   },
+   {
+    "activity": "drive",
+    "minute": 1439,
+    "people": 1217867.7041596756,
+    "diaries": 134
+   },
+   {
+    "activity": "work",
+    "minute": 0,
+    "people": 3818515.0422838205,
+    "diaries": 402
+   },
+   {
+    "activity": "work",
+    "minute": 240,
+    "people": 4407489.321258847,
+    "diaries": 415
+   },
+   {
+    "activity": "work",
+    "minute": 450,
+    "people": 42542560.25599318,
+    "diaries": 3931
+   },
+   {
+    "activity": "work",
+    "minute": 720,
+    "people": 64240389.022400215,
+    "diaries": 5955
+   },
+   {
+    "activity": "work",
+    "minute": 1125,
+    "people": 19351511.745153856,
+    "diaries": 1856
+   },
+   {
+    "activity": "work",
+    "minute": 1439,
+    "people": 4698793.733059755,
+    "diaries": 489
+   },
+   {
+    "activity": "household_020102",
+    "minute": 0,
+    "people": 109066.57078899862,
+    "diaries": 18
+   },
+   {
+    "activity": "household_020102",
+    "minute": 240,
+    "people": 157747.00612270972,
+    "diaries": 19
+   },
+   {
+    "activity": "household_020102",
+    "minute": 450,
+    "people": 1689757.2404224826,
+    "diaries": 273
+   },
+   {
+    "activity": "household_020102",
+    "minute": 720,
+    "people": 3918094.2157407547,
+    "diaries": 598
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1125,
+    "people": 2117685.4014658923,
+    "diaries": 277
+   },
+   {
+    "activity": "household_020102",
+    "minute": 1439,
+    "people": 154146.94460312798,
+    "diaries": 22
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 0,
+    "people": 11139470.832862275,
+    "diaries": 1389
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 240,
+    "people": 2250477.381230683,
+    "diaries": 299
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 450,
+    "people": 11180085.432187067,
+    "diaries": 1637
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 720,
+    "people": 22883711.093876597,
+    "diaries": 3327
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1125,
+    "people": 67374476.63352326,
+    "diaries": 9569
+   },
+   {
+    "activity": "leisure_120303",
+    "minute": 1439,
+    "people": 18023711.025925543,
+    "diaries": 2281
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 0,
+    "people": 73225.44479084668,
+    "diaries": 8
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 240,
+    "people": 12999.793707770705,
+    "diaries": 3
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 450,
+    "people": 152739.6106235264,
+    "diaries": 27
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 720,
+    "people": 1544890.9448422745,
+    "diaries": 227
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1125,
+    "people": 812898.5593169307,
+    "diaries": 94
+   },
+   {
+    "activity": "travel_180782",
+    "minute": 1439,
+    "people": 75716.9821751766,
+    "diaries": 7
+   }
+  ]
+ }
+}

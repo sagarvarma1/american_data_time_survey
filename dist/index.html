@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#f5f5ef" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#151917" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Explore what Americans do at any minute of a typical day. 258,954 government survey diaries from 2003–2025, filterable by age, sex, work, family, place, and company."
+    />
+    <title>American Minute — What are people doing?</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="data.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#activity-browser">Skip to activities</a>
+    <div class="app-shell">
+      <header>
+        <a class="brand" href="#">
+          <span class="brand-icon" aria-hidden="true">◷</span>
+          american minute
+          <span>.</span>
+        </a>
+        <div class="header-actions">
+          <span id="data-badge" class="data-badge">258,954 diaries · 2003–2025</span>
+          <button id="about" class="text-button">
+            About the data
+            <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </header>
+      <main>
+        <div class="title-row">
+          <div>
+            <span class="eyebrow">A TYPICAL DAY IN THE UNITED STATES</span>
+            <h1>What are people doing?</h1>
+            <p>Choose a minute. Explore the lives happening around it.</p>
+          </div>
+        </div>
+        <section class="time-panel" aria-label="Choose a time and survey period">
+          <div class="time-controls">
+            <div class="clock-group">
+              <label class="clock" for="time-input">
+                <span id="clock">12:00</span>
+                <span id="meridiem">PM</span>
+                <input id="time-input" type="time" value="12:00" aria-label="Choose time of day" />
+              </label>
+              <span id="clock-note">Local time of day</span>
+            </div>
+            <div class="filters">
+              <div class="segmented" role="group" aria-label="Day type">
+                <button data-day="all" aria-pressed="true">All days</button>
+                <button data-day="weekday" aria-pressed="false">Weekdays</button>
+                <button data-day="weekend" aria-pressed="false">Weekends</button>
+              </div>
+            </div>
+          </div>
+          <div class="timeline-controls">
+            <button id="play" class="play-button" aria-label="Play the day" aria-pressed="false">
+              ▶
+            </button>
+            <div class="timeline">
+              <input
+                id="timeline"
+                aria-label="Time of day"
+                type="range"
+                min="0"
+                max="1439"
+                step="1"
+                value="720"
+              />
+              <div class="ticks" aria-hidden="true">
+                <span>12 AM</span>
+                <span>6 AM</span>
+                <span>12 PM</span>
+                <span>6 PM</span>
+                <span>12 AM</span>
+              </div>
+            </div>
+            <button id="now" class="now-button">Your time</button>
+          </div>
+        </section>
+        <div id="loading" role="status">Loading the survey…</div>
+        <div id="dashboard" hidden>
+          <section class="filter-panel" aria-label="Filter people and activity context">
+            <div class="filter-group">
+              <span class="field-label">People</span>
+              <div id="person-filters" class="filter-row"></div>
+            </div>
+            <div class="filter-group">
+              <span class="field-label">Activity context</span>
+              <div id="episode-filters" class="filter-row"></div>
+            </div>
+            <button id="reset-filters" class="text-button" hidden>Reset filters</button>
+          </section>
+          <section
+            id="summary"
+            class="summary"
+            aria-label="Sleeping, awake, and driving estimates"
+          ></section>
+          <div class="workspace">
+            <section id="activity-browser" class="activity-browser" aria-label="Browse activities">
+              <div class="browser-heading">
+                <h2>Activities</h2>
+                <div class="segmented compact" role="group" aria-label="Activity detail level">
+                  <button data-mode="overview" aria-pressed="true">Overview</button>
+                  <button data-mode="detail" aria-pressed="false">Detailed</button>
+                </div>
+              </div>
+              <label class="search">
+                <span aria-hidden="true">⌕</span>
+                <input
+                  id="search"
+                  type="search"
+                  aria-label="Search all activities"
+                  placeholder="Search anything: cooking, running, reading…"
+                />
+                <kbd aria-hidden="true">/</kbd>
+              </label>
+              <div class="list-options">
+                <label>
+                  <span class="sr-only">Filter by activity category</span>
+                  <select id="category-filter">
+                    <option value="all">All activities</option>
+                  </select>
+                </label>
+                <span id="result-count"></span>
+              </div>
+              <div class="table-heading">
+                <span>ACTIVITY</span>
+                <button id="unit" aria-label="Toggle between people and percent">
+                  EST. PEOPLE
+                  <span aria-hidden="true">⇄</span>
+                </button>
+                <span id="secondary-unit">%</span>
+              </div>
+              <div id="activity-list" class="activity-list"></div>
+              <button id="load-more" class="load-more" hidden>Show more activities ↓</button>
+              <p id="list-note" class="list-note">Select an activity to explore its day.</p>
+            </section>
+            <aside class="detail-panel" id="detail-panel" aria-label="Selected activity details">
+              <div id="detail-content"></div>
+            </aside>
+          </div>
+        </div>
+      </main>
+      <footer>
+        <span>Based on the American Time Use Survey · U.S. Census Bureau / BLS</span>
+        <button id="download-snapshot" class="text-button">Download this minute ↓</button>
+      </footer>
+    </div>
+    <dialog id="about-dialog" aria-labelledby="about-title">
+      <button id="close-about" class="close-button" aria-label="Close data information">×</button>
+      <span class="eyebrow">THE DATA, IN PLAIN ENGLISH</span>
+      <h2 id="about-title">Every diary since 2003.</h2>
+      <p class="about-lead">
+        258,954 complete diaries. 4,994,172 activity records. Twenty-three years of everyday life.
+      </p>
+      <details open>
+        <summary>What do these numbers mean?</summary>
+        <p>
+          Estimates for the U.S. civilian, noninstitutional population age 15 and older at the
+          selected local clock time, or for the people matching your filters. Counts represent the
+          average population across 2003–2025, not today’s population. “Your time” uses your
+          device’s clock. This is not a live or time-zone-synchronized national count, or a
+          prediction for a specific date.
+        </p>
+        <p>
+          Combining years gives more diaries but blends real changes over time, such as the
+          pandemic. The “Across the years” chart shows each year separately so you can see those
+          changes.
+        </p>
+      </details>
+      <details>
+        <summary>How are years and activities combined?</summary>
+        <p>
+          Each person’s final survey weight contributes during their reported activity interval:
+          TUFNWGTP (the 2006 method, comparable across all years) for every year except 2020, which
+          uses TU20FWGT, as BLS directs. Counts are divided by the number of days the 23 years
+          represent. Data collection paused from March 18 to May 9, 2020, so 2020 represents 313
+          days. After the October 1–November 12, 2025 shutdown, BLS weighted the remaining
+          fourth-quarter diaries to represent the whole quarter. A diary begins at 4 AM; its
+          after-midnight portion keeps the starting day’s weekday/weekend assignment.
+        </p>
+        <p>
+          The overview partitions all activities into 17 groups. Detailed view uses every pooled
+          six-digit activity code. BLS harmonized a few codes so they mean the same thing across all
+          years; their descriptions list the original codes they combine. Reported drivers (TEWHERE
+          = 12) are assigned to driving first, so detailed rows sum to their overview parent.
+        </p>
+      </details>
+      <details>
+        <summary>Filters, places, and company</summary>
+        <p>
+          People filters (sex, age, work status, children at home) use each respondent’s answers on
+          their diary day. Children means household children under 18, grouped by the youngest
+          child’s age. One 2010 respondent with no full- or part-time status is counted as full
+          time.
+        </p>
+        <p>
+          Activity-context filters keep only activities recorded at that place or with that company.
+          While one is on, the summary shows everyone in that context (for example, everyone at a
+          restaurant, whatever they are doing) instead of Sleeping and Awake, and every number on
+          the page follows the same filters. BLS doesn’t record location or company for sleeping,
+          grooming, or private activities, and didn’t record company while working before 2010.
+          Someone can be with several groups at once, so company shares can add up to more than
+          100%.
+        </p>
+      </details>
+      <details>
+        <summary>Sleeping, awake, and sample size</summary>
+        <p>
+          Sleeping includes sleep and naps (010101 and 010199), excluding reported sleeplessness.
+          Awake means everyone not classified as sleeping, including unclassified time; it is not a
+          direct measurement of consciousness. Driving includes car, truck, and motorcycle drivers,
+          not passengers. Primary activities do not capture all multitasking.
+        </p>
+        <p>
+          Every selected activity shows its actual unweighted number of diaries at that minute.
+          Fewer than 30 observations is flagged as a small sample; this is a caution rule, not an
+          official BLS publication threshold. Narrow filters can leave few diaries. Zero
+          observations does not establish that nobody was doing the activity. Confidence intervals
+          have not been computed.
+        </p>
+      </details>
+      <details>
+        <summary>Sources and validation</summary>
+        <p>
+          <a href="https://www.bls.gov/tus/data/datafiles-0325.htm" target="_blank" rel="noopener">
+            BLS 2003–2025 multi-year microdata
+          </a>
+          ·
+          <a
+            href="https://www.bls.gov/tus/other-documentation/pooling.htm"
+            target="_blank"
+            rel="noopener"
+          >
+            Pooling guidance
+          </a>
+          ·
+          <a href="https://www.bls.gov/tus/atususersguide.pdf" target="_blank" rel="noopener">
+            Weighting methods
+          </a>
+          ·
+          <a
+            href="https://www.bls.gov/tus/lexicons/lexiconnoex0325.pdf"
+            target="_blank"
+            rel="noopener"
+          >
+            2003–2025 activity lexicon
+          </a>
+        </p>
+        <p>
+          Every diary covers 1,440 contiguous minutes. The data reproduces all 96 hourly sleeping
+          values in BLS Table A-3 for 2021–2024 and the published 2025 average of 9.03 hours of
+          sleep. Detailed activities sum to their parent at every minute, and filtered estimates are
+          checked against an independent pass over the raw BLS files. This is an independent
+          visualization, not an official BLS publication.
+        </p>
+      </details>
+    </dialog>
+    <div id="toast" role="status" class="toast" hidden></div>
+    <noscript>
+      This explorer requires JavaScript.
+      <a href="https://www.bls.gov/tus/tables/a3-2024.htm">View BLS tables.</a>
+    </noscript>
+  </body>
+</html>

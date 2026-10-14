@@ -1,0 +1,7 @@
+.DS_Store
+__pycache__/
+.openai/*.log
+qa/
+# Raw survey files stay local: BLS 2003–2025 downloads (~1.1 GB, see README) and the
+# unused 2021–2024 CSVs from the previous edition.
+data/raw/
