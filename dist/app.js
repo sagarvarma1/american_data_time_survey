@@ -547,7 +547,7 @@ function renderList() {
     ? visible.map(activityRow).join("")
     : '<div class="empty">No matching activities. Try a broader term or choose “All activities”.</div>';
   $("#load-more").hidden = list.length <= state.limit;
-  $("#load-more").textContent = `Show ${Math.min(40, list.length - state.limit)} more activities ↓`;
+  $("#load-more").textContent = `Show ${Math.max(0, Math.min(40, list.length - state.limit))} more activities ↓`;
   $("#list-note").textContent = detailed
     ? "Detailed rows split driving from other activity contexts. Amber dot = fewer than 30 observed diaries."
     : "17 categories cover these people. Select one to explore its day or see its detailed activities.";

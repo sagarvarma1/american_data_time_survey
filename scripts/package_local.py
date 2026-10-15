@@ -25,6 +25,7 @@ html = inline(
     "<style>" + (DIST / "styles.css").read_text() + "</style>",
 )
 html = inline(html, r'<link rel="icon" href="icon\.svg"[^>]*>\s*', "")
+html = inline(html, r'<link rel="apple-touch-icon" href="apple-touch-icon\.png"[^>]*>\s*', "")
 html = inline(html, r'<script src="data\.js" defer></script>\s*', "")
 html = inline(html, r'<script src="app\.js" defer></script>\s*', "")
 html = inline(

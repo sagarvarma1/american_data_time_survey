@@ -154,5 +154,9 @@ and companion groups. BLS publishes far more detail in the same public-use files
 
 ## Hosting
 
-The existing private Site identity is retained in `.openai/hosting.json`. It has not been published,
-and no deployment URL is claimed as live.
+Deployed on Vercel at [americantimeuse.com](https://americantimeuse.com). `vercel.json` serves
+`dist/` as a static site with no build step, and every push to `main` redeploys.
+
+The link preview (`dist/og.png`, 1200×630 at 2×) uses real numbers for 5:30 PM on a weekday. The
+Open Graph and Twitter tags in `dist/index.html` point to it by absolute URL, so update them if the
+domain changes. The card is rendered from `scripts/og-card.html` with headless Chrome.

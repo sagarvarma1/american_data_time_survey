@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; background: #f5f5ef; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    color: #28362f; padding: 64px 72px 0; position: relative;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; font-size: 26px; font-weight: 650; letter-spacing: -0.02em; }
+  .brand svg { width: 34px; height: 34px; }
+  .brand b { color: #b84c2d; }
+  .meta { position: absolute; top: 72px; right: 72px; font-size: 19px; color: #737c72; }
+  h1 { font-size: 76px; line-height: 1.02; letter-spacing: -0.045em; font-weight: 700; margin-top: 46px; }
+  .sub { font-size: 25px; color: #616b60; margin-top: 18px; }
+  .clock { position: absolute; left: 72px; bottom: 156px; font-size: 19px; color: #737c72; letter-spacing: .12em; font-weight: 600; }
+  .bar { position: absolute; left: 72px; right: 72px; bottom: 108px; height: 36px; display: flex; border-radius: 9px; overflow: hidden; }
+  .bar span { height: 100%; }
+  .legend { position: absolute; left: 72px; right: 72px; bottom: 50px; display: flex; gap: 34px; font-size: 21px; }
+  .legend div { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+  .legend i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+  .legend strong { font-weight: 700; }
+  .legend em { font-style: normal; color: #616b60; }
+</style>
+</head>
+<body>
+  <div class="brand">
+    <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#d96342"/><circle cx="32" cy="32" r="21" fill="none" stroke="#fff9ec" stroke-width="3"/><path d="M32 17v16l10 6" fill="none" stroke="#fff9ec" stroke-width="4" stroke-linecap="round"/></svg>
+    <span>american minute<b>.</b></span>
+  </div>
+  <div class="meta">258,954 diaries · 2003–2025</div>
+  <h1>What are Americans doing,<br />minute by minute?</h1>
+  <p class="sub">Pick any minute of the day. See what everyone else is up to.</p>
+  <div class="clock">5:30 PM ON A WEEKDAY</div>
+  <div class="bar" id="bar"></div>
+  <div class="legend" id="legend"></div>
+  <script>
+    // Weekday 5:30 PM, all filters off, from the app (2003–2025 pooled).
+    const rows = [
+      ["Leisure", 27.0, "#72a399", "67.9M"],
+      ["Chores", 15.4, "#c7ac64", "38.8M"],
+      ["Working", 14.2, "#d78a55", "35.8M"],
+      ["Eating", 10.5, "#d8a091", "26.4M"],
+      ["Driving", 9.5, "#dd6947", "23.8M"],
+      ["", 4.3, "#b595b5"], ["", 3.1, "#a8b9c5"], ["", 3.0, "#b8b66f"], ["", 2.8, "#aaa4c8"],
+      ["", 2.8, "#7885b5"], ["", 2.6, "#92b385"], ["", 1.8, "#85a9c4"], ["", 1.0, "#c5c4be"],
+      ["", 0.8, "#bc9b9b"], ["", 0.7, "#b5a18c"], ["", 0.3, "#bb9f79"], ["", 0.02, "#9bada1"],
+    ];
+    const total = rows.reduce((s, r) => s + r[1], 0);
+    for (const [, pct, color] of rows) {
+      const s = document.createElement("span");
+      s.style.width = (pct / total) * 100 + "%";
+      s.style.background = color;
+      bar.append(s);
+    }
+    for (const [name, , color, n] of rows.slice(0, 5)) {
+      const d = document.createElement("div");
+      d.innerHTML = `<i style="background:${color}"></i><strong>${n}</strong><em>${name.toLowerCase()}</em>`;
+      legend.append(d);
+    }
+  </script>
+</body>
+</html>
