@@ -22,6 +22,18 @@ python3 -m http.server 8080 --directory dist
 - All 23 survey years pooled (2003–2025), by **day type** (all days, weekdays, weekends).
 - **People filters**: sex, age (seven bands), work status (full time, part time, unemployed, not in
   the labor force), and children at home (none, youngest under 6, youngest 6–17).
+- **Advanced filters** (a panel under the main filters):
+  - *Demographics:* age in 5-year groups, race, Hispanic or Latino origin, spouse or partner,
+    marital status, citizenship, veteran, disability.
+  - *Education:* attainment, school enrollment.
+  - *Work:* labor force status, usual hours, number of jobs, class of worker, industry,
+    occupation, weekly earnings quintile within each year, hourly pay.
+  - *Household:* family income, size, number of children, youngest child, spouse or partner's
+    work, eldercare.
+  - *Place:* metropolitan area, region, state.
+  - *Diary day:* day of the week, month, holiday, and a survey-year range.
+- Every filter takes **several options at once** (any of them matches); different filters
+  combine (all must match). Small groups get a note, and rows under 30 diaries are marked.
 - **Activity-context filters**: where the activity happened (home, work, someone else’s home,
   restaurant, store, school, place of worship, gym/outdoors, driving, passenger, walking/biking,
   transit) and who the person was with (alone, spouse/partner, children, other family, friends,
@@ -71,7 +83,9 @@ in a browser (bls.gov rejects command-line downloads) and put them, zipped or un
 | `atusact-0325.zip` | Activities, durations, pooled codes, locations |
 | `atussum-0325.zip` | Weights, year, day, age, sex, work status, children |
 | `atuswho-0325.zip` | Who was present during each activity |
-| `atusresp-0325.zip`, `atusrost-0325.zip` | Reference only (not needed by the build) |
+| `atusresp-0325.zip` | Industry, occupation, class of worker, household size, eldercare, pay, month |
+| `atuscps-0325.zip` | Family income, region, state, marital status, citizenship, veteran, disability |
+| `atusrost-0325.zip` | Reference only (not needed by the build) |
 
 If the downloads are still zipped, unzip each one into a folder of the same name, for example
 `data/raw/bls-0325/atusact-0325/atusact_0325.dat`.
@@ -99,16 +113,21 @@ What the checks cover:
 - Every diary covers exactly 1,440 contiguous minutes, and every episode has a who-with record.
 - All **96 hourly sleeping percentages** in BLS Table A-3 for 2021–2024 match to the published
   precision, and the published **2025 average of 9.03 hours of sleep** is reproduced.
-- For eight filter scenarios (all years; 2020 weekends; 2003–05 weekday women; 2025 young full-time
-  workers; parents of young children at home; weekends with friends; older adults alone; 2021–24),
-  288 weighted snapshots are computed three ways and must agree: directly from the raw CSVs
+- Every diary's stored option for all 34 person filters matches a separate implementation that
+  reads the raw BLS fields directly.
+- For 21 filter scenarios (all years; 2020 weekends; 2003–05 weekday women; 2025 young full-time
+  workers; parents of young children at home; weekends with friends; older adults alone; 2021–24;
+  nine with advanced filters, several options at once, calendar filters, and year ranges; and four
+  with income, region, state, marital status, citizenship, disability, and veteran status),
+  756 weighted snapshots are computed three ways and must agree: directly from the raw CSVs
   (start-time fields, raw location and companion codes, raw demographics), from the decoded binary
   in Python, and from the engine in `engine.js`.
 - Overview categories partition the selected population at every minute; detailed rows sum to their
   parents.
 - The page renders the same from the calculation service as from the diaries: summary cards, list
-  (overview and detailed), and the detail panel with its breakdowns and yearly trend, for nine
-  states covering every filter, at six minutes each, in both units. Every label, number,
+  (overview and detailed), and the detail panel with its breakdowns and yearly trend, for 15
+  states (every basic filter, and advanced, calendar, CPS, and year-range combinations), at six
+  minutes each, in both units. Every label, number,
   percentage, and tooltip matches exactly; chart shapes agree within 0.1 of a 90–150-unit chart
   (a fraction of a pixel). Snapshot CSVs match byte for byte.
 - The website never requests the diary file: the first view needs one request (the selected
@@ -154,9 +173,33 @@ duration imply 14:20). The build logs it, and the cumulative position corrects i
 
 **Filters.**
 
-- **People filters** use the respondent’s answers for their diary day.
+- **People filters** use the respondent’s answers for their diary day (atussum and atusresp).
+  Family income, region, state, marital status, citizenship, veteran status, and disability come
+  from the ATUS-CPS file: the respondent’s row in their household’s final Current Population
+  Survey interview, two to five months before the diary day, so a few may have changed since.
+- **Family income** is in each year’s dollars (not adjusted for inflation), grouped from the
+  CPS’s 16 bands. BLS moved it from `HUFAMINC` to `HEFAMINC` during 2010; before then about 13% of
+  respondents didn’t report it ("Not reported"); afterwards it is fully edited. For comparisons
+  across time, pair it with a narrower survey-year range.
+- **Disability** questions began in mid-2008 and **veteran status** in 2005; earlier diaries are
+  "Not asked". State samples are small for less populous states, even pooled over 23 years.
 - **Work status:** one employed 2010 respondent has no full/part-time status and is counted as full
-  time.
+  time; their usual hours and number of jobs are "Not reported".
+- **Race** categories other than "Two or more races" mean that race alone. **Occupation** follows
+  BLS's major groups, whose census classification changed in 2011 and 2020, so occupations are
+  not strictly comparable across all years.
+- **Weekly earnings** cover wage and salary workers (BLS doesn't collect earnings for the
+  self-employed), in quintiles computed within each survey year with the final weights, so they
+  stay comparable without inflation adjustment and are unaffected by topcoding changes.
+- **Eldercare** questions began in 2011; earlier diaries (and 148 later ones not asked) are "Not
+  asked".
+- **Calendar filters** (day of the week, month, holiday) change how many days are averaged over:
+  each year's days of the chosen day type, times the share of that year's weight those filters
+  select. Counts stay "people on an average such day" (e.g. an average Monday). With all seven
+  weekdays selected this is exactly the unfiltered count; Monday–Friday comes within 0.2% of the
+  weekday day type, which counts calendar days.
+- **Survey years** default to all 23. A range keeps the yearly chart for every year, fading the
+  years outside it.
 - **Context filters** keep only matching activities. Every number on the page follows them. Sleep
   has no recorded location or company, so while one is on, the Sleeping and Awake cards are
   replaced by **everyone in that context** (e.g. everyone at a restaurant, doing anything), whose

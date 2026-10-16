@@ -69,7 +69,7 @@ function loadApp({ hash = "", service = true } = {}) {
   let timerId = 0;
   const document = {
     querySelector: (s) => {
-      if (s.startsWith("[data-filter=") || s.includes("option[value=")) return lazy(s);
+      if (s.startsWith("[data-") || s.includes("option[value=")) return lazy(s);
       assert(nodes[s], `Unknown selector ${s}`);
       return nodes[s];
     },

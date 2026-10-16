@@ -20,8 +20,8 @@ function setScenario(s) {
   run(
     `state.from=${s.years[0]};state.to=${s.years[1]};state.day=${JSON.stringify(s.day)};state.filters={}`,
   );
-  for (const k of ["sex", "age", "employment", "kids", "where", "who"])
-    if (k in s) run(`state.filters.${k}=${s[k]}`);
+  for (const [k, v] of Object.entries(s))
+    if (k !== "years" && k !== "day") run(`state.filters.${k}=${JSON.stringify(v)}`);
   run("compute()");
 }
 
@@ -57,6 +57,7 @@ const comparePaths = (s) =>
     const apply = () => {
       state.day = ${JSON.stringify(s.day)};
       state.filters = ${JSON.stringify(s.filters ?? {})};
+      [state.from, state.to] = ${JSON.stringify(s.years ?? [2003, 2025])};
       state.selected = ${JSON.stringify(s.selected)};
       state.mode = ${JSON.stringify(s.mode ?? "overview")};
       state.parent = ${JSON.stringify(s.parent ?? "all")};
@@ -145,6 +146,13 @@ const comparePaths = (s) =>
     "/api/view?day=all&rows=main&extra=1",
     "/api/detail?day=all&activity=nope",
     "/api/detail?day=all&where=1&activity=awake",
+    "/api/view?day=all&rows=main&race=2,1", // lists must be ascending
+    "/api/view?day=all&rows=main&race=1,1",
+    "/api/view?day=all&rows=main&race=1,",
+    "/api/view?day=all&rows=main&from=2010", // both ends or neither
+    "/api/view?day=all&rows=main&from=2003&to=2025", // the full range is implied
+    "/api/view?day=all&rows=main&from=2020&to=2010",
+    "/api/view?day=all&rows=main&from=1999&to=2010",
   ])
     assert.throws(
       () => service.respond(url.includes("detail") ? "detail" : "view", url),
@@ -161,6 +169,20 @@ const comparePaths = (s) =>
     "api/view",
   ]);
   assert.match(shared.nodes["#summary"].innerHTML, /With: Friends/);
+
+  // A link with advanced filters and a year range opens the advanced panel and requests them.
+  const advancedLink = loadApp({
+    hash: "#day=weekday&race=1%2C2&month=11&from=2010&to=2019&activity=work",
+  });
+  await advancedLink.run("ready");
+  assert.equal(advancedLink.nodes["#advanced-filters"].hidden, false);
+  assert(
+    advancedLink.out.fetched.some((u) =>
+      u.includes("race=1%2C2&month=11&from=2010&to=2019&rows=main"),
+    ),
+    advancedLink.out.fetched.join(" "),
+  );
+  assert.match(advancedLink.nodes["#data-badge"].textContent, /2010–2019/);
 
   // If the service can't be reached, the page computes everything from the diaries instead.
   const offline = loadApp({
@@ -183,14 +205,35 @@ const comparePaths = (s) =>
     { day: "all", selected: "drive" },
     { day: "all", selected: "household_020102" },
     { day: "weekday", selected: "awake" },
-    { day: "weekend", filters: { sex: 0, who: 4 }, selected: "eat" },
-    { day: "weekday", filters: { age: 2, kids: 1, where: 4 }, selected: "context" },
-    { day: "all", filters: { employment: 0 }, selected: "work", mode: "detail" },
-    { day: "weekend", filters: { where: 1 }, selected: "leisure_120303", parent: "leisure" },
-    { day: "all", filters: { age: 6, who: 0 }, selected: "sleep" },
+    { day: "weekend", filters: { sex: [0], who: [4] }, selected: "eat" },
+    { day: "weekday", filters: { age: [2], kids: [1], where: [4] }, selected: "context" },
+    { day: "all", filters: { employment: [0] }, selected: "work", mode: "detail" },
+    { day: "weekend", filters: { where: [1] }, selected: "leisure_120303", parent: "leisure" },
+    { day: "all", filters: { age: [6], who: [0] }, selected: "sleep" },
+    // Advanced filters, several options, calendar filters, and survey-year ranges.
+    { day: "all", filters: { race: [1, 2], education: [4, 5, 6] }, selected: "work" },
+    {
+      day: "all",
+      filters: { weekday: [0, 4], month: [11] },
+      selected: "shop",
+      years: [2010, 2019],
+    },
     {
       day: "weekday",
-      filters: { sex: 1, employment: 3, kids: 2 },
+      filters: { earnings: [4], where: [2, 4] },
+      selected: "context",
+      mode: "detail",
+    },
+    { day: "weekend", filters: { metro: [1], age5: [12, 13], who: [0, 1] }, selected: "awake" },
+    { day: "all", filters: { holiday: [1] }, selected: "eat", years: [2021, 2025] },
+    {
+      day: "weekday",
+      filters: { income: [6, 7], state: [4, 43], marital: [0] },
+      selected: "work_050101",
+    },
+    {
+      day: "weekday",
+      filters: { sex: [1], employment: [3], kids: [2] },
       selected: "care",
       mode: "detail",
     },
@@ -200,7 +243,7 @@ const comparePaths = (s) =>
   }
   // Snapshot downloads match too (after the state the service produced it for).
   run(
-    'state.day = "weekend"; state.filters = { sex: 1 }; state.mode = "detail"; state.parent = "all"; state.selected = "household_020102"; state.minute = 480; update()',
+    'state.day = "weekend"; state.filters = { sex: [1] }; state.mode = "detail"; state.parent = "all"; state.selected = "household_020102"; state.minute = 480; update()',
   );
   nodes["#download-snapshot"].listeners.click();
   assert.equal(
@@ -228,7 +271,8 @@ const comparePaths = (s) =>
   const started = Date.now();
   for (const [name, x] of Object.entries(expectations)) {
     setScenario(x.filters);
-    assert.equal(run("engine.days"), x.days, name);
+    // Calendar filters estimate days from (float32) weights, like the population.
+    assert(Math.abs(run("engine.days") - x.days) <= 1e-6 * x.days, name);
     assert.equal(run("engine.sample"), x.sample, name);
     assert(Math.abs(run("engine.population") - x.population) <= 1e-6 * x.population, name);
     for (const p of x.points) {
@@ -276,7 +320,7 @@ const comparePaths = (s) =>
 
   change("sex", 1);
   change("kids", 1);
-  assert.deepEqual({ ...run("state.filters") }, { sex: 1, kids: 1 });
+  assert.deepEqual(JSON.parse(run("JSON.stringify(state.filters)")), { sex: [1], kids: [1] });
   assert(nodes["#data-badge"].textContent.includes("diaries · 2003–2025"));
   assert.equal(nodes["#reset-filters"].hidden, false);
   assert(out.lastHash.includes("sex=1") && out.lastHash.includes("kids=1"));
@@ -387,6 +431,56 @@ const comparePaths = (s) =>
   nodes["#close-about"].listeners.click();
   assert.equal(nodes["#about-dialog"].open, false);
 
+  // Advanced filters: checkboxes add and remove options; the URL and service carry lists.
+  const tick = (filter, value, checked) =>
+    listeners.change({
+      target: { dataset: { filter }, value: String(value), type: "checkbox", checked },
+    });
+  tick("race", 1, true);
+  tick("race", 2, true);
+  tick("education", 4, true);
+  assert.deepEqual(JSON.parse(run("JSON.stringify(state.filters)")), {
+    race: [1, 2],
+    education: [4],
+  });
+  assert(out.lastHash.includes("race=1%2C2") && out.lastHash.includes("education=4"), out.lastHash);
+  assert.equal(nodes['[data-picker-text="race"]'].textContent, "Black alone, Asian alone");
+  tick("education", 5, true);
+  tick("education", 6, true);
+  assert.equal(nodes['[data-picker-text="education"]'].textContent, "3 selected");
+  assert.equal(nodes["#advanced-count"].textContent, " · 2");
+  tick("race", 1, false);
+  assert.equal(run("JSON.stringify(state.filters.race)"), "[2]");
+  assert.match(nodes["#summary"].innerHTML, /of these people/);
+  // A tiny group gets a note; an empty one says so.
+  run("state.filters = { race: [4], occupation: [5], holiday: [1] }; update()");
+  assert.equal(nodes["#sample-note"].hidden, false);
+  assert.match(nodes["#sample-note"].textContent, /No diaries match|Only \d+ diaries/);
+  run("state.filters = {}; update()");
+  assert.equal(nodes["#sample-note"].hidden, true);
+  // Survey years: the range narrows the diaries; ends that cross move together.
+  listeners.change({ target: { dataset: { range: "from" }, value: "2021" } });
+  assert.deepEqual([run("state.from"), run("state.to")], [2021, 2025]);
+  assert(out.lastHash.includes("from=2021&to=2025"), out.lastHash);
+  assert.equal(run("engine.days"), 365 * 4 + 366);
+  listeners.change({ target: { dataset: { range: "to" }, value: "2010" } });
+  assert.deepEqual([run("state.from"), run("state.to")], [2010, 2010]);
+  assert.equal(nodes["#advanced-count"].textContent, " · 1");
+  nodes["#reset-filters"].listeners.click();
+  assert.deepEqual([run("state.from"), run("state.to")], [2003, 2025]);
+  // Calendar filters: every weekday selected is the same as no filter, and Monday–Friday
+  // estimates the same days as the weekday day type (by weight rather than by the calendar).
+  run("state.filters = { weekday: [0, 1, 2, 3, 4, 5, 6] }; compute()");
+  assert.equal(run("engine.days"), 8348);
+  run("state.filters = { weekday: [0, 1, 2, 3, 4] }; compute()");
+  const byWeight = run("engine.days");
+  run('state.filters = {}; state.day = "weekday"; compute()');
+  assert(
+    Math.abs(byWeight / run("engine.days") - 1) < 0.002,
+    `${byWeight} vs ${run("engine.days")}`,
+  );
+  run('state.day = "all"; update()');
+
   // Following the device clock, links leave the time out; a chosen time is kept.
   run("now()");
   assert.equal(run("state.following"), true);
@@ -399,7 +493,7 @@ const comparePaths = (s) =>
   run("state.filters={};loadState();compute()");
   assert.equal(run("state.minute"), 21 * 60 + 15);
   assert.deepEqual([run("state.from"), run("state.to"), run("state.day")], [2003, 2025, "weekend"]);
-  assert.deepEqual({ ...run("state.filters") }, { sex: 0, who: 4 });
+  assert.deepEqual(JSON.parse(run("JSON.stringify(state.filters)")), { sex: [0], who: [4] });
   sandbox.location.hash = "#years=2025-2003&where=0&age=99";
   run("state.filters={};loadState()");
   assert.deepEqual(

@@ -27,15 +27,11 @@ from collections import Counter
 from pathlib import Path
 
 from categories import (
+    FILTERS,
     GROUPS,
-    PERSON_FILTERS,
     WHERE,
     WHO,
-    age_group,
     category,
-    employment_group,
-    kids_group,
-    sex_group,
     where_group,
     who_bit,
 )
@@ -46,13 +42,45 @@ FILES = {
     "summary": RAW / "atussum-0325/atussum_0325.dat",
     "activity": RAW / "atusact-0325/atusact_0325.dat",
     "who": RAW / "atuswho-0325/atuswho_0325.dat",
+    "respondent": RAW / "atusresp-0325/atusresp_0325.dat",
+    "cps": RAW / "atuscps-0325/atuscps_0325.dat",
 }
+# Respondent-file fields used by filters (the summary file has the rest).
+RESPONDENT_FIELDS = (
+    "TRMJIND1",
+    "TRMJOCC1",
+    "TEIO1COW",
+    "TRNUMHOU",
+    "TUELDER",
+    "TEERNHRY",
+    "TUMONTH",
+)
+# ATUS-CPS fields, from the respondent's own row (ATUS line 1). The file also covers every
+# household member, and households that didn't complete the ATUS.
+CPS_FIELDS = (
+    "HEFAMINC",
+    "HUFAMINC",
+    "GEREG",
+    "GESTFIPS",
+    "PEMARITL",
+    "PRCITSHP",
+    "PEAFEVER",
+    "PRDISFLG",
+)
 YEARS = range(2003, 2026)
 EXPECTED_DIARIES = 258_954
 EXPECTED_EPISODES = 4_994_172
 COVID_GAP = (dt.date(2020, 3, 18), dt.date(2020, 5, 9))
 SLEEP_CODES = ("010101", "010102", "010199")  # BLS "Sleeping" includes sleeplessness
 PUBLISHED_SLEEP_HOURS = {2025: 9.03}  # BLS ATUS home page, "Sleeping: 9.03 in 2025"
+
+
+def sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        while chunk := f.read(1 << 20):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def represented_days(year):
@@ -103,38 +131,72 @@ def who_masks(path):
         yield current + (mask,)
 
 
+def earnings_cutoffs(rows):
+    """Weighted quintile cutoffs of weekly earnings among wage and salary workers, per year.
+    A diary's quintile is the number of cutoffs its earnings exceed (ties go to the lower one)."""
+    by_year = {}
+    for r in rows:
+        if r["TELFS"] in ("1", "2") and int(r["TRERNWA"]) >= 0:
+            by_year.setdefault(int(r["TUYEAR"]), []).append((int(r["TRERNWA"]), r["weight"]))
+    cutoffs = {}
+    for year, values in by_year.items():
+        values.sort()
+        total, running, cuts = sum(w for _, w in values), 0.0, []
+        for value, w in values:
+            running += w
+            while len(cuts) < 4 and running >= total * (len(cuts) + 1) / 5:
+                cuts.append(value)
+        cutoffs[year] = cuts
+    return cutoffs
+
+
 def read_respondents():
-    respondents = []
-    sleep_minutes = Counter()
-    unknown_hours = 0
+    extra = {}
+    with FILES["respondent"].open() as f:
+        for r in csv.DictReader(f):
+            extra[r["TUCASEID"]] = {k: r[k] for k in RESPONDENT_FIELDS}
+    with FILES["cps"].open() as f:
+        for r in csv.DictReader(f):
+            if r["TULINENO"] == "1" and r["TUCASEID"] in extra:
+                assert "GEREG" not in extra[r["TUCASEID"]], r["TUCASEID"]
+                extra[r["TUCASEID"]].update({k: r[k] for k in CPS_FIELDS})
+    assert all("GEREG" in e for e in extra.values()), "every respondent has a CPS row"
+    rows = []
     with FILES["summary"].open() as f:
         for r in csv.DictReader(f):
             year = int(r["TUYEAR"])
-            weight = float(r["TU20FWGT"] if year == 2020 else r["TUFNWGTP"])
-            assert weight > 0, (r["TUCASEID"], year)
+            r["weight"] = float(r["TU20FWGT"] if year == 2020 else r["TUFNWGTP"])
+            assert r["weight"] > 0, (r["TUCASEID"], year)
             assert r["TUCASEID"].startswith(str(year))
-            weekend = int(r["TUDIARYDAY"]) in (1, 7)
-            unknown_hours += r["TELFS"] in ("1", "2") and r["TRDPFTPT"] not in ("1", "2")
-            groups = (
-                sex_group(int(r["TESEX"])),
-                age_group(int(r["TEAGE"])),
-                employment_group(int(r["TELFS"]), int(r["TRDPFTPT"])),
-                kids_group(int(r["TRCHILDNUM"]), int(r["TRYHHCHILD"])),
-            )
-            attrs = int(weekend) | groups[0] << 1 | groups[1] << 2 | groups[2] << 5 | groups[3] << 7
-            respondents.append((r["TUCASEID"], year, weight, attrs))
-            sleep_minutes[year] += weight * sum(int(r["t" + c]) for c in SLEEP_CODES)
-    assert len(respondents) == EXPECTED_DIARIES, len(respondents)
-    assert unknown_hours == 1, unknown_hours  # see employment_group()
-    ids = [r[0] for r in respondents]
+            assert 15 <= int(r["TEAGE"]) <= 85
+            r.update(extra.pop(r["TUCASEID"]))
+            rows.append(r)
+    assert not extra and len(rows) == EXPECTED_DIARIES, len(rows)
+    ids = [r["TUCASEID"] for r in rows]
     assert ids == sorted(ids) and len(set(ids)) == len(ids)
-    return respondents, sleep_minutes
+    # One employed 2010 diary lacks full/part-time status, hours, and number of jobs.
+    assert sum(r["TELFS"] in ("1", "2") and r["TRDPFTPT"] not in ("1", "2") for r in rows) == 1
+
+    cutoffs = earnings_cutoffs(rows)
+    respondents, sleep_minutes = [], Counter()
+    for r in rows:
+        year = int(r["TUYEAR"])
+        if year in cutoffs and int(r["TRERNWA"]) >= 0:
+            r["earnings_quintile"] = sum(int(r["TRERNWA"]) > c for c in cutoffs[year])
+        groups = []
+        for f in FILTERS:
+            g = f["classify"](r)
+            assert g is not None and 0 <= g < len(f["options"]), (f["id"], r["TUCASEID"])
+            groups.append(g)
+        respondents.append((r["TUCASEID"], year, r["weight"], groups))
+        sleep_minutes[year] += r["weight"] * sum(int(r["t" + c]) for c in SLEEP_CODES)
+    return respondents, sleep_minutes, cutoffs
 
 
 def build():
     labels, includes = load_labels()
     benchmark = json.loads((ROOT / "data/benchmarks.json").read_text())
-    respondents, summary_sleep = read_respondents()
+    respondents, summary_sleep, cutoffs = read_respondents()
     index = {case: i for i, (case, *_) in enumerate(respondents)}
 
     duration = array.array("H")
@@ -225,7 +287,10 @@ def build():
     sections = [
         ("weight", "f", array.array("f", (r[2] for r in respondents))),
         ("year", "B", array.array("B", (r[1] - YEARS[0] for r in respondents))),
-        ("attrs", "H", array.array("H", (r[3] for r in respondents))),
+        *(
+            (f"f_{f['id']}", "B", array.array("B", (r[3][k] for r in respondents)))
+            for k, f in enumerate(FILTERS)
+        ),
         ("episodeCount", "B", episode_count),
         ("duration", "H", duration),
         ("code", "H", code_index),
@@ -241,7 +306,7 @@ def build():
     packed = gzip.compress(bytes(blob), compresslevel=9, mtime=0)
 
     meta = {
-        "schemaVersion": 4,
+        "schemaVersion": 5,
         "populationScope": "U.S. civilian noninstitutional population age 15+",
         "firstYear": YEARS[0],
         "years": years,
@@ -251,9 +316,18 @@ def build():
         ],
         "details": sorted(details.values(), key=lambda d: d["id"]),
         "personFilters": [
-            {"id": i, "label": l, "options": o, "shift": s, "bits": b}
-            for (i, l, o), (s, b) in zip(PERSON_FILTERS, [(1, 1), (2, 3), (5, 2), (7, 2)])
+            {
+                "id": f["id"],
+                "label": f["label"],
+                "group": f["group"],
+                "options": f["options"],
+                "column": f"f_{f['id']}",
+                **({"basic": True} if f.get("basic") else {}),
+                **({"calendar": True} if f.get("calendar") else {}),
+            }
+            for f in FILTERS
         ],
+        "earningsCutoffs": {str(y): [c / 100 for c in cuts] for y, cuts in cutoffs.items()},
         "episodeFilters": [
             {"id": WHERE[0], "label": WHERE[1], "options": WHERE[2]},
             {"id": WHO[0], "label": WHO[1], "options": WHO[2]},
@@ -262,7 +336,7 @@ def build():
         "diaries": len(respondents),
         "episodes": len(duration),
         "validation": validation,
-        "rawSha256": {k: hashlib.sha256(p.read_bytes()).hexdigest() for k, p in FILES.items()},
+        "rawSha256": {k: sha256(p) for k, p in FILES.items()},
         "source": "https://www.bls.gov/tus/data/datafiles-0325.htm",
     }
     # The diaries go in a content-addressed file, so browsers can cache it forever. data.js keeps

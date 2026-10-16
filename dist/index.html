@@ -120,7 +120,20 @@
               <span class="field-label">Activity context</span>
               <div id="episode-filters" class="filter-row"></div>
             </div>
-            <button id="reset-filters" class="text-button" hidden>Reset filters</button>
+            <div class="filter-actions">
+              <button
+                id="advanced-toggle"
+                class="text-button"
+                aria-expanded="false"
+                aria-controls="advanced-filters"
+              >
+                Advanced filters
+                <span id="advanced-count"></span>
+              </button>
+              <button id="reset-filters" class="text-button" hidden>Reset filters</button>
+            </div>
+            <div id="advanced-filters" class="advanced-filters" hidden></div>
+            <p id="sample-note" class="sample-note" role="status" hidden></p>
           </section>
           <section
             id="summary"

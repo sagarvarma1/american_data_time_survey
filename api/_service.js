@@ -33,7 +33,7 @@ function load() {
 function parse(url, kind) {
   const params = new URL(url, "http://localhost").searchParams;
   const filters = [...data.personFilters, ...data.episodeFilters];
-  const allowed = new Set(["v", "day", ...filters.map((f) => f.id)]);
+  const allowed = new Set(["v", "day", "from", "to", ...filters.map((f) => f.id)]);
   allowed.add(kind === "detail" ? "activity" : "rows");
   for (const key of params.keys()) if (!allowed.has(key)) throw Error(`unknown parameter ${key}`);
   const state = {
@@ -44,12 +44,26 @@ function parse(url, kind) {
     selected: "sleep",
   };
   if (!["all", "weekday", "weekend"].includes(state.day)) throw Error("bad day");
+  // Filter values are option lists in ascending order, as the page sends them.
   for (const f of filters) {
     if (!params.has(f.id)) continue;
     const v = params.get(f.id);
-    if (!/^\d+$/.test(v) || +v >= f.options.length || (f.id === "where" && +v === 0))
-      throw Error(`bad ${f.id}`);
-    state.filters[f.id] = +v;
+    if (!/^\d+(,\d+)*$/.test(v)) throw Error(`bad ${f.id}`);
+    const values = v.split(",").map(Number);
+    const valid = values.every(
+      (x, i) =>
+        x < f.options.length && (i === 0 || x > values[i - 1]) && !(f.id === "where" && x === 0),
+    );
+    if (!valid) throw Error(`bad ${f.id}`);
+    state.filters[f.id] = values;
+  }
+  // Survey years: both ends or neither, within the data, in order, and not the full range.
+  if (params.has("from") || params.has("to")) {
+    const [from, to] = ["from", "to"].map((k) => params.get(k));
+    const years = data.years.map((y) => String(y.year));
+    if (!years.includes(from) || !years.includes(to) || +from > +to) throw Error("bad years");
+    if (from === years[0] && to === years.at(-1)) throw Error("bad years (full range is implied)");
+    [state.from, state.to] = [+from, +to];
   }
   if (kind === "view") {
     state.rows = params.get("rows");

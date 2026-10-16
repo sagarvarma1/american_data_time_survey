@@ -62,7 +62,8 @@ function buildEngine(data, buffer) {
   return {
     weight: Float64Array.from(cols.weight),
     year: cols.year.slice(),
-    attrs: cols.attrs.slice(),
+    // One column per person filter: each diary's option index.
+    columns: Object.fromEntries(data.personFilters.map((f) => [f.id, cols[f.column].slice()])),
     ...sorted,
     keys,
     keyIndex,
@@ -150,29 +151,38 @@ function computeEngine(E, data, state) {
   ])
     arr.fill(0);
 
-  // 1. Which diaries match the day type and person filters (one mask test on packed bits).
+  // 1. Which diaries match the day type and person filters. Filter values are lists of
+  // options: a diary matches a filter if it has any of them, and must match every filter.
   const from = state.from - data.firstYear,
-    to = state.to - data.firstYear;
-  let mask = 0,
-    match = 0;
-  for (const f of data.personFilters)
-    if (state.filters[f.id] !== undefined) {
-      mask |= ((1 << f.bits) - 1) << f.shift;
-      match |= state.filters[f.id] << f.shift;
-    }
-  if (state.day !== "all") {
-    mask |= 1;
-    match |= state.day === "weekend" ? 1 : 0;
+    to = state.to - data.firstYear,
+    nYears = data.years.length;
+  const person = [],
+    calendar = [];
+  for (const f of data.personFilters) {
+    const values = state.filters[f.id];
+    if (!values) continue;
+    const allowed = new Uint8Array(f.options.length);
+    for (const v of values) allowed[v] = 1;
+    (f.calendar ? calendar : person).push([E.columns[f.id], allowed]);
   }
+  const weekday = E.columns.weekday, // Monday = 0 … Sunday = 6
+    weekend = state.day === "weekend";
+  const dayWeight = new Float64Array(nYears),
+    calendarWeight = new Float64Array(nYears);
   let population = 0,
     sample = 0;
   for (let i = 0; i < weight.length; i++) {
-    if ((E.attrs[i] & mask) !== match) {
-      diaryState[i] = 0;
-      continue;
-    }
-    const y = E.year[i],
-      inRange = y >= from && y <= to;
+    diaryState[i] = 0;
+    if (state.day !== "all" && weekday[i] >= 5 !== weekend) continue;
+    const y = E.year[i];
+    dayWeight[y] += weight[i];
+    let ok = true;
+    for (const [column, allowed] of calendar) if (!allowed[column[i]]) ok = false;
+    if (!ok) continue;
+    calendarWeight[y] += weight[i];
+    for (const [column, allowed] of person) if (!allowed[column[i]]) ok = false;
+    if (!ok) continue;
+    const inRange = y >= from && y <= to;
     diaryState[i] = inRange ? 2 : 1;
     yearPopulation[y] += weight[i];
     yearSample[y]++;
@@ -183,9 +193,10 @@ function computeEngine(E, data, state) {
   }
 
   // 2. Detailed activity curves, then categories as the sum of their detailed rows.
-  const whereOnly = state.filters.where ?? -1;
-  const whoBit = state.filters.who === undefined ? 0 : 1 << state.filters.who;
-  const passes = (e) => (whereOnly < 0 || where[e] === whereOnly) && (!whoBit || who[e] & whoBit);
+  const places = state.filters.where && new Uint8Array(E.nWhere);
+  for (const v of state.filters.where ?? []) places[v] = 1;
+  const company = (state.filters.who ?? []).reduce((mask, v) => mask | (1 << v), 0);
+  const passes = (e) => (!places || places[where[e]]) && (!company || who[e] & company);
   const filtered = hasContext(state.filters);
   for (let k = E.nCategories; k < E.keys.length; k++) {
     const base = k * STRIDE;
@@ -244,8 +255,16 @@ function computeEngine(E, data, state) {
   accumulate(yearWeights, data.years.length);
   accumulate(yearCounts, data.years.length);
 
+  // Days represented: calendar days of the day type in each year, or with calendar filters (day
+  // of the week, month, holiday), the share of them those filters select, estimated as the
+  // share of that year's weight among all diaries of the day type. Counts stay "people on an
+  // average such day".
   E.days = 0;
-  for (let y = from; y <= to; y++) E.days += data.years[y].days[state.day];
+  for (let y = from; y <= to; y++) {
+    const share = calendar.length ? calendarWeight[y] / (dayWeight[y] || 1) : 1;
+    E.days += data.years[y].days[state.day] * share;
+  }
+  if (!E.days) E.days = 1; // nothing matches; every count is zero
   E.population = population / E.days;
   E.sample = sample;
 }

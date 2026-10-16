@@ -40,6 +40,32 @@ function yearsLabel() {
   return state.from === state.to ? String(state.from) : `${state.from}–${state.to}`;
 }
 
+// ---- Filters ----
+// A filter's value is a sorted list of option indexes (any of them matches); a missing filter
+// means any. Survey years are a separate from–to range, offered with the advanced filters.
+const fullRange = () => state.from === data.years[0].year && state.to === data.years.at(-1).year;
+
+function setFilter(id, values) {
+  const sorted = [...new Set(values)].sort((a, b) => a - b);
+  if (sorted.length) state.filters[id] = sorted;
+  else delete state.filters[id];
+}
+
+function filterParams(p) {
+  for (const f of allFilters()) if (state.filters[f.id]) p.set(f.id, state.filters[f.id].join(","));
+  if (!fullRange()) {
+    p.set("from", state.from);
+    p.set("to", state.to);
+  }
+}
+
+// Identifies the set of diaries a view was computed for.
+function viewKey() {
+  const p = new URLSearchParams({ day: state.day });
+  filterParams(p);
+  return String(p);
+}
+
 // ---- Where the numbers come from ----
 // Fastest first: the precomputed first view in data.js (the unfiltered overview), the
 // calculation service (any view, as one small response that Vercel caches), or the diaries
@@ -82,22 +108,20 @@ function useDiaries() {
 }
 
 async function fetchView(kind, extra) {
-  const p = new URLSearchParams({ v: data.diaryFile.replace(/\D*(\w+)\.bin$/, "$1") });
+  const p = new URLSearchParams({ v: data.diaryFile.match(/([0-9a-f]+)\.bin$/)[1] });
   p.set("day", state.day);
-  for (const f of allFilters())
-    if (state.filters[f.id] !== undefined) p.set(f.id, state.filters[f.id]);
+  filterParams(p);
   for (const [k, v] of Object.entries(extra)) p.set(k, v);
   const response = await fetch(`api/${kind}?${p}`);
   if (!response.ok) throw Error(`api/${kind}: HTTP ${response.status}`);
   return response.json();
 }
 
-function viewEngine(view, day, filters) {
+function viewEngine(view, key) {
   const keyIndex = Object.fromEntries(view.ids.map((id, i) => [id, i]));
   return {
     partial: true,
-    day,
-    filters: { ...filters },
+    key,
     keyIndex,
     allRows: data.details.every((d) => d.id in keyIndex),
     weights: unpackCurves(view.people),
@@ -132,8 +156,6 @@ function addDetail(E, d) {
   E.yearSample = d.yearSample;
 }
 
-const sameFilters = (a, b) => allFilters().every((f) => a[f.id] === b[f.id]);
-
 // Detailed rows are needed only when the list shows them.
 function listsDetails() {
   return state.mode === "detail" || Boolean(state.query.trim()) || state.parent !== "all";
@@ -142,7 +164,7 @@ function listsDetails() {
 // Whether an engine has every number the page is about to show.
 function covers(E) {
   if (!E || !E.partial) return Boolean(E);
-  if (E.day !== state.day || !sameFilters(E.filters, state.filters)) return false;
+  if (E.key !== viewKey()) return false;
   const has = (id) => id in E.keyIndex || E.detail?.id === id;
   return summaryIds().every(has) && has(state.selected) && (!listsDetails() || E.allRows);
 }
@@ -150,14 +172,14 @@ function covers(E) {
 const hasExtras = () => !engine.partial || engine.detail?.id === state.selected;
 
 async function viewFor() {
-  const current =
-    engine?.partial && engine.day === state.day && sameFilters(engine.filters, state.filters);
-  if (current && (!listsDetails() || engine.allRows)) return engine;
-  if (!listsDetails() && !Object.keys(state.filters).length && data.preview)
-    return viewEngine(data.preview[state.day], state.day, {});
+  const key = viewKey(),
+    unfiltered = !Object.keys(state.filters).length && fullRange();
+  if (engine?.partial && engine.key === key && (!listsDetails() || engine.allRows)) return engine;
+  if (!listsDetails() && unfiltered && data.preview)
+    return viewEngine(data.preview[state.day], key);
   if (!service()) throw Error("The standalone page computes everything locally");
   const rows = listsDetails() ? "all" : "main";
-  return viewEngine(await fetchView("view", { rows }), state.day, state.filters);
+  return viewEngine(await fetchView("view", { rows }), key);
 }
 
 // Bring the numbers up to date with the state, then render. Interactions that change only the
@@ -177,8 +199,7 @@ async function refresh() {
     return;
   }
   const id = ++request;
-  const sameView =
-    engine?.partial && engine.day === state.day && sameFilters(engine.filters, state.filters);
+  const sameView = engine?.partial && engine.key === viewKey();
   // The view and the selected activity's extras don't depend on each other: request both at once.
   const extras =
     service() && !(sameView && engine.detail?.id === state.selected)
@@ -223,8 +244,8 @@ function summaryIds() {
 
 function syncContextSelection() {
   const label = data.episodeFilters
-    .filter((f) => state.filters[f.id] !== undefined)
-    .map((f) => (f.id === "who" ? "With: " : "") + f.options[state.filters[f.id]])
+    .filter((f) => state.filters[f.id])
+    .map((f) => (f.id === "who" ? "With: " : "") + optionList(f))
     .join(" · ");
   byId.context.label = label || "In this context";
   if (contextFiltered() && state.selected === "awake") state.selected = "context";
@@ -280,10 +301,14 @@ function escapeHTML(s) {
   );
 }
 
+function optionList(f) {
+  return state.filters[f.id].map((v) => f.options[v]).join(" or ");
+}
+
 function filterSummary() {
   return allFilters()
-    .filter((f) => state.filters[f.id] !== undefined)
-    .map((f) => f.options[state.filters[f.id]])
+    .filter((f) => state.filters[f.id])
+    .map((f) => `${f.label}: ${optionList(f)}`)
     .join(" · ");
 }
 
@@ -297,8 +322,7 @@ function saveState() {
     activity: state.selected,
     unit: state.unit,
   });
-  for (const f of allFilters())
-    if (state.filters[f.id] !== undefined) p.set(f.id, state.filters[f.id]);
+  filterParams(p);
   if (state.query) p.set("q", state.query);
   // While the clock follows the device, links leave the time out, so whoever opens one sees
   // their own local time. A time someone picked is kept.
@@ -333,9 +357,16 @@ function loadState() {
   if (byId[p.get("activity")]) state.selected = p.get("activity");
   for (const f of allFilters()) {
     const v = p.get(f.id);
-    const valid = /^\d+$/.test(v || "") && +v < f.options.length;
-    if (valid && !(f.id === "where" && +v === 0)) state.filters[f.id] = +v;
+    if (!/^\d+(,\d+)*$/.test(v || "")) continue;
+    const values = v.split(",").map(Number);
+    setFilter(
+      f.id,
+      values.filter((i) => i < f.options.length && !(f.id === "where" && i === 0)),
+    );
   }
+  const from = Number(p.get("from")),
+    to = Number(p.get("to"));
+  if (from >= first && to <= last && from <= to) [state.from, state.to] = [from, to];
   state.query = p.get("q") || "";
 }
 
@@ -373,9 +404,51 @@ function renderClock() {
   $$("[data-day]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.day === state.day));
 }
 
+function pickerText(f) {
+  const values = state.filters[f.id];
+  if (!values) return anyLabels[f.id] || "Any";
+  return values.length <= 2
+    ? values.map((v) => f.options[v]).join(", ")
+    : `${values.length} selected`;
+}
+
 function renderFilters() {
-  for (const f of allFilters()) $(`[data-filter="${f.id}"]`).value = state.filters[f.id] ?? "";
-  $("#reset-filters").hidden = !Object.keys(state.filters).length;
+  for (const f of allFilters()) {
+    $(`[data-picker-text="${f.id}"]`).textContent = pickerText(f);
+    $(`[data-picker="${f.id}"]`).classList.toggle("active", Boolean(state.filters[f.id]));
+    for (const box of $$(`[data-filter="${f.id}"]`))
+      box.checked = Boolean(state.filters[f.id]?.includes(Number(box.value)));
+  }
+  $('[data-range="from"]').value = state.from;
+  $('[data-range="to"]').value = state.to;
+  const advanced =
+    data.personFilters.filter((f) => !f.basic && state.filters[f.id]).length + !fullRange();
+  $("#advanced-count").textContent = advanced ? ` · ${advanced}` : "";
+  $("#reset-filters").hidden = !Object.keys(state.filters).length && fullRange();
+  const n = engine.sample,
+    note = $("#sample-note");
+  note.hidden = n >= 300;
+  note.textContent = n
+    ? `Only ${n.toLocaleString()} diaries match these filters. Estimates for a group this small are rough; activities with fewer than 30 diaries are marked.`
+    : "No diaries match these filters. Try removing one.";
+}
+
+function closePickers() {
+  for (const picker of $$(".picker")) {
+    const menu = picker.querySelector(".picker-menu");
+    if (!menu) continue; // the survey-years control has no menu
+    menu.hidden = true;
+    picker.querySelector(".picker-button").setAttribute("aria-expanded", "false");
+  }
+}
+
+function togglePicker(id) {
+  const picker = $(`[data-picker="${id}"]`),
+    menu = picker.querySelector(".picker-menu"),
+    open = menu.hidden;
+  closePickers();
+  menu.hidden = !open;
+  picker.querySelector(".picker-button").setAttribute("aria-expanded", String(open));
 }
 
 function renderSummary() {
@@ -604,7 +677,8 @@ function yearsChart(a) {
   const bars = series
     .map((s, i) => {
       const height = s.empty ? 0 : Math.max(1, (s.share / max) * (h - 4));
-      const cls = `year-bar${s.n < SMALL_SAMPLE ? " small" : ""}`;
+      const outside = s.year < state.from || s.year > state.to; // beyond the chosen survey years
+      const cls = `year-bar${s.n < SMALL_SAMPLE ? " small" : ""}${outside ? " outside" : ""}`;
       const label = s.empty
         ? `${s.year}: no diaries match these filters`
         : `${s.year}: ${shareText(s.share)} (${s.n.toLocaleString()} diaries)${s.year === 2020 ? " · partial year" : ""}`;
@@ -648,7 +722,7 @@ function renderDetail() {
     a.id === "awake" || !extras
       ? ""
       : ["where", "who"]
-          .filter((kind) => state.filters[kind] === undefined)
+          .filter((kind) => state.filters[kind]?.length !== 1)
           .map((kind) => breakdownBlock(kind, a))
           .join("");
   const years = extras ? yearsChart(a) : "";
@@ -789,18 +863,56 @@ function download(type) {
 
 // ---- Startup ----
 function buildControls() {
-  const select = (f) => `
-    <label class="filter">
-      <span class="sr-only">${escapeHTML(f.label)}</span>
-      <select data-filter="${f.id}">
-        <option value="">${escapeHTML(anyLabels[f.id] || "Any")}</option>
-        ${f.options.map((o, i) => `<option value="${i}">${escapeHTML(o)}</option>`).join("")}
-      </select>
-    </label>`;
-  $("#person-filters").innerHTML = data.personFilters.map(select).join("");
-  // "Location not recorded" is not a useful filter choice.
-  $("#episode-filters").innerHTML = data.episodeFilters.map(select).join("");
-  $('[data-filter="where"] option[value="0"]')?.remove();
+  // Every filter is a dropdown of checkboxes: pick any number of options.
+  const picker = (f, named) => `
+    <div class="picker" data-picker="${f.id}">
+      ${named ? `<span class="picker-name" aria-hidden="true">${escapeHTML(f.label)}</span>` : ""}
+      <button type="button" class="picker-button" aria-haspopup="true" aria-expanded="false" data-picker-toggle="${f.id}">
+        <span class="sr-only">${escapeHTML(f.label)}: </span><span class="picker-text" data-picker-text="${f.id}"></span>
+      </button>
+      <div class="picker-menu" role="group" aria-label="${escapeHTML(f.label)}" hidden>
+        ${f.options
+          .map((o, i) =>
+            // "Location not recorded" is not a useful filter choice.
+            f.id === "where" && i === 0
+              ? ""
+              : `<label class="picker-option"><input type="checkbox" data-filter="${f.id}" value="${i}" /><span>${escapeHTML(o)}</span></label>`,
+          )
+          .join("")}
+        <button type="button" class="picker-any" data-picker-clear="${f.id}">${escapeHTML(anyLabels[f.id] || "Any")}</button>
+      </div>
+    </div>`;
+  const basic = data.personFilters.filter((f) => f.basic),
+    advanced = data.personFilters.filter((f) => !f.basic);
+  $("#person-filters").innerHTML = basic.map((f) => picker(f, false)).join("");
+  $("#episode-filters").innerHTML = data.episodeFilters.map((f) => picker(f, false)).join("");
+  const years = data.years.map((y) => `<option value="${y.year}">${y.year}</option>`).join("");
+  const range = `
+    <div class="picker">
+      <span class="picker-name" aria-hidden="true">Survey years</span>
+      <span class="year-range">
+        <select data-range="from" aria-label="First survey year">${years}</select>
+        <span aria-hidden="true">to</span>
+        <select data-range="to" aria-label="Last survey year">${years}</select>
+      </span>
+    </div>`;
+  $("#advanced-filters").innerHTML = [...new Set(advanced.map((f) => f.group))]
+    .map(
+      (group) => `
+      <fieldset class="advanced-group">
+        <legend>${escapeHTML(group)}</legend>
+        <div class="advanced-row">
+          ${advanced
+            .filter((f) => f.group === group)
+            .map((f) => picker(f, true))
+            .join("")}
+          ${group === "Diary day" ? range : ""}
+        </div>
+      </fieldset>`,
+    )
+    .join("");
+  // Open the advanced panel when a link arrives with advanced filters.
+  if (advanced.some((f) => state.filters[f.id]) || !fullRange()) toggleAdvanced(true);
   $("#category-filter").innerHTML =
     '<option value="all">All activities</option>' +
     data.categories.map((a) => `<option value="${a.id}">${escapeHTML(a.label)}</option>`).join("");
@@ -809,7 +921,7 @@ function buildControls() {
 async function init() {
   try {
     data = window.AMERICAN_MINUTE_DATA;
-    if (!data || data.schemaVersion !== 4) throw Error("Survey data unavailable");
+    if (!data || data.schemaVersion !== 5) throw Error("Survey data unavailable");
     byId = Object.fromEntries(data.categories.map((a) => [a.id, a]));
     for (const a of data.details) {
       a.color = byId[a.parent].color;
@@ -874,17 +986,36 @@ $$("[data-day]").forEach((b) =>
     update();
   }),
 );
+function toggleAdvanced(open) {
+  $("#advanced-filters").hidden = !open;
+  $("#advanced-toggle").setAttribute("aria-expanded", String(open));
+}
+
 document.addEventListener("change", (e) => {
-  const id = e.target.dataset?.filter;
-  if (!id || !engine) return;
+  const t = e.target,
+    id = t.dataset?.filter,
+    range = t.dataset?.range;
+  if (!engine || !(id || range)) return;
   stop();
-  if (e.target.value === "") delete state.filters[id];
-  else state.filters[id] = Number(e.target.value);
+  if (range) {
+    state[range] = Number(t.value);
+    // Keep the range in order: moving one end past the other moves both.
+    if (state.from > state.to) state[range === "from" ? "to" : "from"] = state[range];
+  } else if (t.type === "checkbox") {
+    const current = state.filters[id] ?? [],
+      v = Number(t.value);
+    setFilter(id, t.checked ? [...current, v] : current.filter((x) => x !== v));
+  } else setFilter(id, t.value === "" ? [] : [Number(t.value)]);
   update();
 });
+$("#advanced-toggle").addEventListener("click", () =>
+  toggleAdvanced($("#advanced-filters").hidden),
+);
 $("#reset-filters").addEventListener("click", () => {
   stop();
   state.filters = {};
+  state.from = data.years[0].year;
+  state.to = data.years.at(-1).year;
   update();
 });
 $$("[data-mode]").forEach((b) =>
@@ -918,10 +1049,21 @@ $("#load-more").addEventListener("click", () => {
   renderList();
 });
 document.addEventListener("click", (e) => {
+  const toggle = e.target.closest("[data-picker-toggle]");
+  if (toggle) return togglePicker(toggle.dataset.pickerToggle);
+  if (!e.target.closest(".picker-menu")) closePickers();
+  const clear = e.target.closest("[data-picker-clear]");
+  if (clear && engine) {
+    stop();
+    setFilter(clear.dataset.pickerClear, []);
+    closePickers();
+    return update();
+  }
   const b = e.target.closest("[data-activity]");
   if (b && engine) selectActivity(b.dataset.activity);
 });
 document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePickers();
   if (
     e.key === "/" &&
     !["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName) &&
@@ -943,7 +1085,8 @@ $("#download-snapshot").addEventListener("click", async () => {
   if (!covers(engine)) return;
   // The snapshot lists every activity, so a view without the detailed rows fetches them first.
   if (engine.partial && !engine.allRows) {
-    const all = viewEngine(await fetchView("view", { rows: "all" }), state.day, state.filters);
+    const key = viewKey();
+    const all = viewEngine(await fetchView("view", { rows: "all" }), key);
     for (const k of DETAIL_FIELDS) all[k] = engine[k];
     engine = all;
   }
