@@ -444,10 +444,10 @@ const comparePaths = (s) =>
     education: [4],
   });
   assert(out.lastHash.includes("race=1%2C2") && out.lastHash.includes("education=4"), out.lastHash);
-  assert.equal(nodes['[data-picker-text="race"]'].textContent, "Black alone, Asian alone");
+  assert.equal(nodes['[data-picker-text="race"]'].textContent, "Race: Black alone, Asian alone");
   tick("education", 5, true);
   tick("education", 6, true);
-  assert.equal(nodes['[data-picker-text="education"]'].textContent, "3 selected");
+  assert.equal(nodes['[data-picker-text="education"]'].textContent, "Education: 3 selected");
   assert.equal(nodes["#advanced-count"].textContent, " · 2");
   tick("race", 1, false);
   assert.equal(run("JSON.stringify(state.filters.race)"), "[2]");

@@ -299,7 +299,7 @@ FILTERS = [
     # Demographics
     dict(
         id="age5",
-        label="Age (5-year groups)",
+        label="Age (5-year)",
         group="Demographics",
         options=[
             "15–19",
@@ -335,7 +335,7 @@ FILTERS = [
     ),
     dict(
         id="hispanic",
-        label="Hispanic or Latino",
+        label="Hispanic origin",
         group="Demographics",
         options=["Hispanic or Latino", "Not Hispanic or Latino"],
         classify=lambda r: {1: 0, 2: 1}[num(r, "PEHSPNON")],
@@ -377,6 +377,7 @@ FILTERS = [
     dict(
         id="veteran",
         label="Veteran",
+        note="Asked from 2005.",
         group="Demographics",
         options=["Served in the armed forces", "Never served", "Not asked"],
         classify=lambda r: yes_no_asked(r, "PEAFEVER"),
@@ -384,6 +385,7 @@ FILTERS = [
     dict(
         id="disability",
         label="Disability",
+        note="Asked from mid-2008.",
         group="Demographics",
         options=["Has a disability", "No disability", "Not asked"],
         classify=lambda r: yes_no_asked(r, "PRDISFLG"),
@@ -406,7 +408,8 @@ FILTERS = [
     ),
     dict(
         id="enrolled",
-        label="Enrolled in school",
+        label="School enrollment",
+        note="Asked of people under 50.",
         group="Education",
         options=[
             "High school student",
@@ -419,7 +422,7 @@ FILTERS = [
     # Work
     dict(
         id="laborforce",
-        label="Labor force status",
+        label="Labor force",
         group="Work",
         options=[
             "Employed, at work",
@@ -432,7 +435,8 @@ FILTERS = [
     ),
     dict(
         id="hours",
-        label="Usual weekly hours",
+        label="Weekly hours",
+        note="Hours usually worked per week, all jobs.",
         group="Work",
         options=[
             "Under 20",
@@ -450,7 +454,7 @@ FILTERS = [
     ),
     dict(
         id="multiplejobs",
-        label="Number of jobs",
+        label="Jobs",
         group="Work",
         options=["More than one job", "One job", "Not employed", "Not reported"],
         classify=lambda r: 2 if not employed(r) else {"1": 0, "2": 1}.get(r["TEMJOT"], 3),
@@ -458,6 +462,7 @@ FILTERS = [
     dict(
         id="worker",
         label="Class of worker",
+        note="Employer type for the main job.",
         group="Work",
         options=[
             "Federal government",
@@ -497,6 +502,7 @@ FILTERS = [
     dict(
         id="occupation",
         label="Occupation",
+        note="BLS major groups; the classification changed in 2011 and 2020.",
         group="Work",
         options=[
             "Management, business, and financial",
@@ -515,7 +521,8 @@ FILTERS = [
     ),
     dict(
         id="earnings",
-        label="Weekly earnings (within each year)",
+        label="Earnings",
+        note="Weekly earnings of wage and salary workers, in fifths within each survey year.",
         group="Work",
         options=[
             "Bottom 20% of earners",
@@ -530,7 +537,7 @@ FILTERS = [
     ),
     dict(
         id="paytype",
-        label="Pay",
+        label="Hourly pay",
         group="Work",
         options=["Paid hourly", "Not paid hourly", "Self-employed or without pay", "Not employed"],
         classify=lambda r: 3 if not employed(r) else {"1": 0, "2": 1}.get(r["TEERNHRY"], 2),
@@ -538,7 +545,8 @@ FILTERS = [
     # Household
     dict(
         id="income",
-        label="Family income (that year’s dollars)",
+        label="Family income",
+        note="In each year’s dollars, not adjusted for inflation.",
         group="Household",
         options=[
             "Under $15,000",
@@ -562,7 +570,8 @@ FILTERS = [
     ),
     dict(
         id="children",
-        label="Children under 18 in household",
+        label="Children",
+        note="Children under 18 in the household.",
         group="Household",
         options=["None", "1", "2", "3", "4 or more"],
         classify=lambda r: min(num(r, "TRCHILDNUM"), 4),
@@ -576,7 +585,7 @@ FILTERS = [
     ),
     dict(
         id="partnerwork",
-        label="Spouse or partner’s work",
+        label="Partner’s work",
         group="Household",
         options=[
             "Spouse or partner employed",
@@ -587,7 +596,8 @@ FILTERS = [
     ),
     dict(
         id="eldercare",
-        label="Cares for an older adult",
+        label="Eldercare",
+        note="Cared for an older adult in the past 3–4 months. Asked from 2011.",
         group="Household",
         options=[
             "Provided eldercare in past 3–4 months",
@@ -600,7 +610,7 @@ FILTERS = [
     # Place
     dict(
         id="metro",
-        label="Metropolitan area",
+        label="Metro area",
         group="Place",
         options=["Metropolitan", "Nonmetropolitan", "Not identified"],
         classify=metro_group,
@@ -622,7 +632,7 @@ FILTERS = [
     # Diary day
     dict(
         id="weekday",
-        label="Day of the week",
+        label="Day of week",
         group="Diary day",
         calendar=True,
         options=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],

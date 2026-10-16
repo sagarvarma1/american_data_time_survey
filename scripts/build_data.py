@@ -323,6 +323,7 @@ def build():
                 "options": f["options"],
                 "column": f"f_{f['id']}",
                 **({"basic": True} if f.get("basic") else {}),
+                **({"note": f["note"]} if f.get("note") else {}),
                 **({"calendar": True} if f.get("calendar") else {}),
             }
             for f in FILTERS

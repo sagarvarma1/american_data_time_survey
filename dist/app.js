@@ -404,12 +404,13 @@ function renderClock() {
   $$("[data-day]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.day === state.day));
 }
 
+// Basic filters read "Any age" or the choice; advanced ones carry their name: "Race: Asian alone".
 function pickerText(f) {
   const values = state.filters[f.id];
-  if (!values) return anyLabels[f.id] || "Any";
-  return values.length <= 2
-    ? values.map((v) => f.options[v]).join(", ")
-    : `${values.length} selected`;
+  if (!values) return anyLabels[f.id] || f.label;
+  const chosen =
+    values.length <= 2 ? values.map((v) => f.options[v]).join(", ") : `${values.length} selected`;
+  return f.id in anyLabels ? chosen : `${f.label}: ${chosen}`;
 }
 
 function renderFilters() {
@@ -864,13 +865,13 @@ function download(type) {
 // ---- Startup ----
 function buildControls() {
   // Every filter is a dropdown of checkboxes: pick any number of options.
-  const picker = (f, named) => `
+  const picker = (f) => `
     <div class="picker" data-picker="${f.id}">
-      ${named ? `<span class="picker-name" aria-hidden="true">${escapeHTML(f.label)}</span>` : ""}
       <button type="button" class="picker-button" aria-haspopup="true" aria-expanded="false" data-picker-toggle="${f.id}">
         <span class="sr-only">${escapeHTML(f.label)}: </span><span class="picker-text" data-picker-text="${f.id}"></span>
       </button>
       <div class="picker-menu" role="group" aria-label="${escapeHTML(f.label)}" hidden>
+        ${f.note ? `<p class="picker-note">${escapeHTML(f.note)}</p>` : ""}
         ${f.options
           .map((o, i) =>
             // "Location not recorded" is not a useful filter choice.
@@ -884,31 +885,30 @@ function buildControls() {
     </div>`;
   const basic = data.personFilters.filter((f) => f.basic),
     advanced = data.personFilters.filter((f) => !f.basic);
-  $("#person-filters").innerHTML = basic.map((f) => picker(f, false)).join("");
-  $("#episode-filters").innerHTML = data.episodeFilters.map((f) => picker(f, false)).join("");
+  $("#person-filters").innerHTML = basic.map(picker).join("");
+  $("#episode-filters").innerHTML = data.episodeFilters.map(picker).join("");
   const years = data.years.map((y) => `<option value="${y.year}">${y.year}</option>`).join("");
   const range = `
-    <div class="picker">
-      <span class="picker-name" aria-hidden="true">Survey years</span>
-      <span class="year-range">
-        <select data-range="from" aria-label="First survey year">${years}</select>
-        <span aria-hidden="true">to</span>
-        <select data-range="to" aria-label="Last survey year">${years}</select>
-      </span>
-    </div>`;
+    <span class="year-range" role="group" aria-label="Survey years">
+      <span aria-hidden="true">Years</span>
+      <select data-range="from" aria-label="First survey year">${years}</select>
+      <span aria-hidden="true">to</span>
+      <select data-range="to" aria-label="Last survey year">${years}</select>
+    </span>`;
+  // One compact row per group: its name, then its dropdowns.
   $("#advanced-filters").innerHTML = [...new Set(advanced.map((f) => f.group))]
     .map(
       (group) => `
-      <fieldset class="advanced-group">
-        <legend>${escapeHTML(group)}</legend>
+      <div class="advanced-group" role="group" aria-label="${escapeHTML(group)}">
+        <span class="advanced-label" aria-hidden="true">${escapeHTML(group)}</span>
         <div class="advanced-row">
           ${advanced
             .filter((f) => f.group === group)
-            .map((f) => picker(f, true))
+            .map(picker)
             .join("")}
           ${group === "Diary day" ? range : ""}
         </div>
-      </fieldset>`,
+      </div>`,
     )
     .join("");
   // Open the advanced panel when a link arrives with advanced filters.
