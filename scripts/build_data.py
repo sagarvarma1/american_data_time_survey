@@ -15,13 +15,13 @@ consistent with TUACTDUR24 by construction; the start-time field has rare typos.
 """
 
 import array
-import base64
 import csv
 import datetime as dt
 import gzip
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
@@ -241,7 +241,7 @@ def build():
     packed = gzip.compress(bytes(blob), compresslevel=9, mtime=0)
 
     meta = {
-        "schemaVersion": 3,
+        "schemaVersion": 4,
         "populationScope": "U.S. civilian noninstitutional population age 15+",
         "firstYear": YEARS[0],
         "years": years,
@@ -265,10 +265,19 @@ def build():
         "rawSha256": {k: hashlib.sha256(p.read_bytes()).hexdigest() for k, p in FILES.items()},
         "source": "https://www.bls.gov/tus/data/datafiles-0325.htm",
     }
-    payload = dict(meta, diaryData=base64.b64encode(packed).decode("ascii"))
+    # The diaries go in a content-addressed file, so browsers can cache it forever. data.js keeps
+    # the small metadata; build_preview.cjs then adds the precomputed first view to it.
+    diary_dir = ROOT / "dist/diaries"
+    diary_dir.mkdir(exist_ok=True)
+    for old in diary_dir.glob("*.bin"):
+        old.unlink()
+    diary_file = f"diaries/{hashlib.sha256(packed).hexdigest()[:16]}.bin"
+    (ROOT / "dist" / diary_file).write_bytes(packed)
+    payload = dict(meta, diaryFile=diary_file, diaryBytes=len(packed))
     (ROOT / "dist/data.js").write_text(
         "window.AMERICAN_MINUTE_DATA=" + json.dumps(payload, separators=(",", ":")) + ";\n"
     )
+    subprocess.run(["node", str(ROOT / "scripts/build_preview.cjs")], check=True)
     (ROOT / "data/validation.json").write_text(json.dumps(validation, indent=2) + "\n")
     print(
         json.dumps(
@@ -280,6 +289,7 @@ def build():
                 "rawBytes": len(blob),
                 "gzipBytes": len(packed),
                 "dataJsBytes": (ROOT / "dist/data.js").stat().st_size,
+                "diaryFile": diary_file,
                 "startTimeTypos": start_time_typos,
             },
             indent=2,

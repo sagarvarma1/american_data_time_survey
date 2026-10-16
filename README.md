@@ -6,9 +6,11 @@ people are doing, across all 23 years, by day type and any combination of filter
 
 ## Open
 
-Double-click `dist/index.html`, or open the self-contained `../american-minute.html`. No server,
-network, external fonts, or package installation is required. It needs a current browser (gzip
-`DecompressionStream`: Chrome/Edge 80+, Firefox 113+, Safari 16.4+). Optional HTTP preview:
+Open the self-contained `../american-minute.html` (double-click; no server or network needed:
+it computes everything from the diaries it carries), or deploy the project to Vercel (see
+[Hosting](#hosting)). It needs a current browser (gzip `DecompressionStream`: Chrome/Edge 80+,
+Firefox 113+, Safari 16.4+). Serving `dist/` with a plain static server also works; without the
+calculation service, the page quietly computes from the diary file instead.
 
 ```sh
 python3 -m http.server 8080 --directory dist
@@ -32,9 +34,31 @@ python3 -m http.server 8080 --directory dist
 - Light and dark themes follow the device setting. Everything is stored in the URL, and two CSV
   downloads export the current minute or the selected activity’s whole day.
 
-The browser does the arithmetic. `dist/data.js` holds the de-identified diaries in a compact,
-gzip-compressed binary (about 16 MB). On load, the app groups episodes by activity, and each
-filter change recomputes every curve in a single pass (about 50–70 ms on a laptop).
+## How it computes and loads
+
+`dist/engine.js` turns diaries into curves. `dist/diaries/<hash>.bin` holds the de-identified
+diaries in a compact, gzip-compressed binary (12 MB); the engine groups episodes by activity once,
+then computes every curve for a day type and set of filters in a single pass (about 40 ms on a
+laptop). The same engine runs in three places, fastest first:
+
+1. **Precomputed first view.** `dist/data.js` (about 250 KB compressed) carries the metadata and
+   the unfiltered overview for each day type: every category and Awake at every minute. The page
+   draws from it immediately.
+2. **Calculation service** (`api/`, Vercel functions). Anything else, such as a shared link with
+   filters, a filter change, or the detailed list, is one request to `/api/view` (every curve for
+   a day type and filters: about 40–80 KB compressed for the overview, 200–800 KB with all 690
+   detailed activities, fetched only when the list shows them). The selected activity's location,
+   company, and yearly trend come from `/api/detail` (about 110 KB), requested at the same time.
+   URLs carry the data version, so responses are cached permanently by browsers and Vercel's CDN:
+   each distinct view is computed once. Parameters are validated strictly, so the cache holds only
+   valid views.
+3. **The diaries themselves.** The standalone page computes locally, and if the service can't be
+   reached, the website quietly downloads the diary file and does the same.
+
+Views (1 and 2) send curves rounded to whole people, as the page displays them (breakdowns and
+yearly trends to hundredths of a person), stored as minute-to-minute differences. Lists rank by
+the rounded counts and CSV percentages follow them, so every source renders the same page; the
+tests check this. Visitors never see a loading message.
 
 ## Data
 
@@ -62,10 +86,11 @@ what each harmonized code combines. Provenance and file hashes are in `data/PROV
 Python uses only the standard library. No npm dependencies.
 
 ```sh
-python3 scripts/build_data.py     # ~1 min: writes dist/data.js and data/validation.json
+python3 scripts/build_data.py     # ~1 min: writes the diary file, dist/data.js (runs
+                                  # build_preview.cjs for the first view), data/validation.json
 python3 scripts/check_data.py     # ~1 min: independent checks; writes data/test-expectations.json
-node --check dist/app.js
-node scripts/check_app.cjs        # browser engine + UI flows, against those expectations
+node --check dist/engine.js && node --check dist/app.js
+node scripts/check_app.cjs        # engine, service, and UI flows, against those expectations
 python3 scripts/package_local.py  # ../american-minute.html and ../american-minute-source.zip
 ```
 
@@ -78,9 +103,18 @@ What the checks cover:
   workers; parents of young children at home; weekends with friends; older adults alone; 2021–24),
   288 weighted snapshots are computed three ways and must agree: directly from the raw CSVs
   (start-time fields, raw location and companion codes, raw demographics), from the decoded binary
-  in Python, and from the browser engine in `app.js`.
+  in Python, and from the engine in `engine.js`.
 - Overview categories partition the selected population at every minute; detailed rows sum to their
   parents.
+- The page renders the same from the calculation service as from the diaries: summary cards, list
+  (overview and detailed), and the detail panel with its breakdowns and yearly trend, for nine
+  states covering every filter, at six minutes each, in both units. Every label, number,
+  percentage, and tooltip matches exactly; chart shapes agree within 0.1 of a 90–150-unit chart
+  (a fraction of a pixel). Snapshot CSVs match byte for byte.
+- The website never requests the diary file: the first view needs one request (the selected
+  activity's extras), a filter or shared link needs a view and extras, and search reuses loaded
+  rows. Every response is cacheable, malformed requests are refused, and with the service
+  unavailable the page falls back to the diaries and renders identically.
 - For 2021–2024, the new pipeline reproduces the previous edition (built from separate annual files)
   at every minute for all 17 categories and three day types: diary counts exactly, and people within
   0.6, which is float32 weight rounding.
@@ -155,7 +189,11 @@ and companion groups. BLS publishes far more detail in the same public-use files
 ## Hosting
 
 Deployed on Vercel at [americantimeuse.com](https://americantimeuse.com). `vercel.json` serves
-`dist/` as a static site with no build step, and every push to `main` redeploys.
+`dist/` with no build step, deploys `api/view.js` and `api/detail.js` as functions (bundling the
+diary file, `data.js`, and `engine.js`), and caches `dist/diaries/` permanently. Every push to
+`main` redeploys, and Vercel clears its CDN cache for the new deployment. A new server instance
+loads the diaries in about half a second; later requests take about 50–150 ms, and cached ones
+none.
 
 The link preview (`dist/og.png`, 1200×630 at 2×) uses real numbers for 5:30 PM on a weekday. The
 Open Graph and Twitter tags in `dist/index.html` point to it by absolute URL, so update them if the

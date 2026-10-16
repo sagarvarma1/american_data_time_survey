@@ -1,4 +1,4 @@
-"""Check dist/data.js against the raw BLS files and write expectations for the app tests.
+"""Check dist/data.js and the diary file against the raw BLS files and write expectations for the app tests.
 
 1. Decode the packed diary file in Python and validate its contract.
 2. Recompute weighted snapshots directly from the raw CSVs (start times, raw TEWHERE and
@@ -8,7 +8,6 @@
 """
 
 import array
-import base64
 import csv
 import gzip
 import json
@@ -39,7 +38,7 @@ def load_data():
     prefix = "window.AMERICAN_MINUTE_DATA="
     assert text.startswith(prefix) and text.endswith(";\n")
     data = json.loads(text[len(prefix) : -2])
-    blob = gzip.decompress(base64.b64decode(data.pop("diaryData")))
+    blob = gzip.decompress((ROOT / "dist" / data["diaryFile"]).read_bytes())
     columns = {}
     for section in data["layout"]:
         values = array.array(section["type"])

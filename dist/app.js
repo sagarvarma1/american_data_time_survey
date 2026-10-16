@@ -3,8 +3,6 @@
 // ---- State and DOM helpers ----
 const $ = (s) => document.querySelector(s),
   $$ = (s) => [...document.querySelectorAll(s)];
-const DAY = 1440,
-  STRIDE = DAY + 1; // one extra slot per curve for wrap-around differences
 let data,
   engine,
   byId,
@@ -42,7 +40,17 @@ function yearsLabel() {
   return state.from === state.to ? String(state.from) : `${state.from}–${state.to}`;
 }
 
-// ---- Diary engine: decode once, then recompute curves when filters change ----
+// ---- Where the numbers come from ----
+// Fastest first: the precomputed first view in data.js (the unfiltered overview), the
+// calculation service (any view, as one small response that Vercel caches), or the diaries
+// themselves (the standalone page, or silently if the service can't be reached). The first two
+// send curves rounded exactly as the page displays them, and the tests check that all three
+// render the same page.
+let local = null, // the diary engine, once loaded
+  fallback = null,
+  request = 0; // the latest update; responses to older ones are dropped
+const service = () => !data.diaryData;
+
 async function inflate(base64) {
   let compressed;
   try {
@@ -54,132 +62,159 @@ async function inflate(base64) {
   return new Response(stream).arrayBuffer();
 }
 
-// Decode the packed columns, then regroup episodes by activity so each activity's curve is
-// built from one contiguous run of episodes (cache-friendly and easy to subset).
-function buildEngine(buffer) {
-  const types = { f: Float32Array, B: Uint8Array, H: Uint16Array };
-  const cols = {};
-  for (const s of data.layout) cols[s.name] = new types[s.type](buffer, s.offset, s.length);
+// The standalone page carries the diaries inline; the website keeps them in a file whose name
+// changes whenever the data does, so browsers can cache it permanently.
+async function loadDiaries() {
+  if (data.diaryData) return inflate(data.diaryData);
+  const response = await fetch(data.diaryFile);
+  if (!response.ok) throw Error(`${data.diaryFile}: HTTP ${response.status}`);
+  const stream = response.body.pipeThrough(new DecompressionStream("gzip"));
+  return new Response(stream).arrayBuffer();
+}
 
-  const keys = [...data.categories.map((c) => c.id), ...data.details.map((d) => d.id)];
-  const keyIndex = Object.fromEntries(keys.map((k, i) => [k, i]));
-  keyIndex.context = keys.length;
-  const nCategories = data.categories.length;
-  const children = data.categories.map((c) =>
-    data.details.filter((d) => d.parent === c.id).map((d) => keyIndex[d.id]),
-  );
+function useDiaries() {
+  return (fallback ??= (async () => {
+    const full = buildEngine(data, await loadDiaries());
+    await new Promise((resolve) => setTimeout(resolve)); // let the page respond between steps
+    local = full;
+    await update();
+  })());
+}
 
-  // Each code maps to a detail key, or to the "Driving · …" key when the person was driving.
-  const driving = data.episodeFilters[0].options.indexOf("Driving");
-  const codeKey = data.codes.map((c) => [`${c.parent}_${c.code}`, `drive_${c.code}`]);
-  const nEpisodes = cols.duration.length;
-  const episodeKey = new Uint16Array(nEpisodes);
-  const keyStart = new Uint32Array(keys.length + 1);
-  for (let e = 0; e < nEpisodes; e++) {
-    const k = keyIndex[codeKey[cols.code[e]][cols.where[e] === driving ? 1 : 0]];
-    episodeKey[e] = k;
-    keyStart[k + 1]++;
-  }
-  for (let k = 0; k < keys.length; k++) keyStart[k + 1] += keyStart[k];
+async function fetchView(kind, extra) {
+  const p = new URLSearchParams({ v: data.diaryFile.replace(/\D*(\w+)\.bin$/, "$1") });
+  p.set("day", state.day);
+  for (const f of allFilters())
+    if (state.filters[f.id] !== undefined) p.set(f.id, state.filters[f.id]);
+  for (const [k, v] of Object.entries(extra)) p.set(k, v);
+  const response = await fetch(`api/${kind}?${p}`);
+  if (!response.ok) throw Error(`api/${kind}: HTTP ${response.status}`);
+  return response.json();
+}
 
-  const sorted = {
-    diary: new Uint32Array(nEpisodes),
-    start: new Uint16Array(nEpisodes),
-    duration: new Uint16Array(nEpisodes),
-    where: new Uint8Array(nEpisodes),
-    who: new Uint8Array(nEpisodes),
-  };
-  const cursor = keyStart.slice(0, keys.length);
-  for (let i = 0, e = 0; i < cols.weight.length; i++) {
-    let start = 240; // diaries begin at 4 AM
-    for (let n = 0; n < cols.episodeCount[i]; n++, e++) {
-      const j = cursor[episodeKey[e]]++;
-      sorted.diary[j] = i;
-      sorted.start[j] = start;
-      sorted.duration[j] = cols.duration[e];
-      sorted.where[j] = cols.where[e];
-      sorted.who[j] = cols.who[e];
-      start = (start + cols.duration[e]) % DAY;
-    }
-  }
-
-  const nYears = data.years.length,
-    nWhere = data.episodeFilters[0].options.length,
-    nWho = data.episodeFilters[1].options.length;
+function viewEngine(view, day, filters) {
+  const keyIndex = Object.fromEntries(view.ids.map((id, i) => [id, i]));
   return {
-    weight: Float64Array.from(cols.weight),
-    year: cols.year.slice(),
-    attrs: cols.attrs.slice(),
-    ...sorted,
-    keys,
+    partial: true,
+    day,
+    filters: { ...filters },
     keyIndex,
-    nCategories,
-    children,
-    keyStart,
-    nWhere,
-    nWho,
-    diaryState: new Uint8Array(cols.weight.length), // 0 excluded, 1 other years, 2 selected years
-    // One row per activity key, plus a last row for "everyone in this context" (all activities
-    // that match the location/company filters).
-    weights: new Float64Array((keys.length + 1) * STRIDE),
-    counts: new Int32Array((keys.length + 1) * STRIDE),
-    whereWeights: new Float64Array(nWhere * STRIDE),
-    whoWeights: new Float64Array((nWho + 1) * STRIDE), // last row: company not recorded
-    yearWeights: new Float64Array(nYears * STRIDE),
-    yearCounts: new Int32Array(nYears * STRIDE),
-    yearPopulation: new Float64Array(nYears),
-    yearSample: new Int32Array(nYears),
-    population: 0,
-    sample: 0,
-    days: 0,
+    allRows: data.details.every((d) => d.id in keyIndex),
+    weights: unpackCurves(view.people),
+    counts: unpackCurves(view.diaries),
+    population: view.population,
+    sample: view.sample,
+    days: 1, // curves already hold people
   };
 }
 
-// Difference-array updates for an episode covering [start, end) minutes, where end may pass
-// midnight. Separate float and integer versions keep each one monomorphic, and therefore fast.
-// These hot helpers are const bindings rather than global functions, which is faster in
-// sandboxes (such as the Node test harness) that intercept global-object lookups.
-const addWeight = (arr, base, start, end, w) => {
-  arr[base + start] += w;
-  if (end <= DAY) {
-    arr[base + end] -= w;
-  } else {
-    arr[base + DAY] -= w;
-    arr[base] += w;
-    arr[base + end - DAY] -= w;
-  }
-};
+// The selected activity's curve, location, company, and yearly trend.
+const DETAIL_FIELDS = ["detail", "whereWeights", "whoWeights", "nWhere", "nWho"].concat([
+  "yearWeights",
+  "yearCounts",
+  "yearPopulation",
+  "yearSample",
+]);
 
-const addCount = (arr, base, start, end) => {
-  arr[base + start]++;
-  if (end <= DAY) {
-    arr[base + end]--;
-  } else {
-    arr[base + DAY]--;
-    arr[base]++;
-    arr[base + end - DAY]--;
-  }
-};
+function addDetail(E, d) {
+  E.detail = {
+    id: d.id,
+    total: unpackCurves([d.total]),
+    diaries: unpackCurves([d.diaries]),
+  };
+  E.whereWeights = unpackCurves(d.where, DETAIL_SCALE);
+  E.whoWeights = unpackCurves(d.who, DETAIL_SCALE);
+  E.nWhere = d.where.length;
+  E.nWho = d.who.length - 1;
+  E.yearWeights = unpackCurves(d.years, DETAIL_SCALE);
+  E.yearCounts = unpackCurves(d.yearDiaries);
+  E.yearPopulation = d.yearPopulation;
+  E.yearSample = d.yearSample;
+}
 
-const accumulate = (arr, rows) => {
-  for (let r = 0; r < rows; r++) {
-    let running = 0;
-    for (let m = 0, base = r * STRIDE; m < DAY; m++) {
-      running += arr[base + m];
-      arr[base + m] = running;
-    }
-  }
-};
+const sameFilters = (a, b) => allFilters().every((f) => a[f.id] === b[f.id]);
 
-const addRow = (arr, target, source) => {
-  for (let m = 0; m < STRIDE; m++) arr[target * STRIDE + m] += arr[source * STRIDE + m];
-};
+// Detailed rows are needed only when the list shows them.
+function listsDetails() {
+  return state.mode === "detail" || Boolean(state.query.trim()) || state.parent !== "all";
+}
+
+// Whether an engine has every number the page is about to show.
+function covers(E) {
+  if (!E || !E.partial) return Boolean(E);
+  if (E.day !== state.day || !sameFilters(E.filters, state.filters)) return false;
+  const has = (id) => id in E.keyIndex || E.detail?.id === id;
+  return summaryIds().every(has) && has(state.selected) && (!listsDetails() || E.allRows);
+}
+
+const hasExtras = () => !engine.partial || engine.detail?.id === state.selected;
+
+async function viewFor() {
+  const current =
+    engine?.partial && engine.day === state.day && sameFilters(engine.filters, state.filters);
+  if (current && (!listsDetails() || engine.allRows)) return engine;
+  if (!listsDetails() && !Object.keys(state.filters).length && data.preview)
+    return viewEngine(data.preview[state.day], state.day, {});
+  if (!service()) throw Error("The standalone page computes everything locally");
+  const rows = listsDetails() ? "all" : "main";
+  return viewEngine(await fetchView("view", { rows }), state.day, state.filters);
+}
+
+// Bring the numbers up to date with the state, then render. Interactions that change only the
+// minute or the list's presentation render directly. `updating` lets tests wait for the result.
+let updating = Promise.resolve();
+function update() {
+  return (updating = refresh());
+}
+
+async function refresh() {
+  syncContextSelection();
+  saveState();
+  if (local) {
+    engine = local;
+    compute();
+    render();
+    return;
+  }
+  const id = ++request;
+  const sameView =
+    engine?.partial && engine.day === state.day && sameFilters(engine.filters, state.filters);
+  // The view and the selected activity's extras don't depend on each other: request both at once.
+  const extras =
+    service() && !(sameView && engine.detail?.id === state.selected)
+      ? fetchView("detail", { activity: state.selected })
+      : null;
+  extras?.catch(() => {}); // a failure is handled where it is awaited
+  try {
+    const E = await viewFor();
+    if (id !== request) return;
+    // A larger view of the same day and filters keeps the extras already loaded.
+    if (E !== engine && sameView && engine.detail) for (const k of DETAIL_FIELDS) E[k] = engine[k];
+    engine = E;
+    if (covers(E)) render();
+    if (hasExtras()) return;
+    if (!extras) return useDiaries(); // the standalone page
+    addDetail(E, await extras);
+    if (id === request) render();
+  } catch (e) {
+    if (service()) console.error(e);
+    await useDiaries();
+  }
+}
+
+// List changes need a fetch only when they reveal rows the current view doesn't have.
+function refreshList() {
+  if (covers(engine)) {
+    renderList();
+    saveState();
+  } else update();
+}
 
 // Location/company filters apply to activities, not people, so the summary changes with them:
 // without them it shows Sleeping, Awake, and Driving; with them, everyone in that context
 // (for example, everyone at a restaurant) and Driving. Every number follows the same filters.
 function contextFiltered() {
-  return state.filters.where !== undefined || state.filters.who !== undefined;
+  return hasContext(state.filters);
 }
 
 function summaryIds() {
@@ -196,134 +231,15 @@ function syncContextSelection() {
   if (!contextFiltered() && state.selected === "context") state.selected = "awake";
 }
 
-// Recompute every curve for the current years, day type, and filters.
+// Recompute every curve for the current day type, filters, and selected activity.
 function compute() {
   syncContextSelection();
-  const E = engine;
-  const { weight, diaryState, diary, start, duration, where, who, keyStart, nWho } = E;
-  const { weights, counts, whereWeights, whoWeights } = E;
-  const { yearWeights, yearCounts, yearPopulation, yearSample } = E;
-  for (const arr of [
-    weights,
-    counts,
-    whereWeights,
-    whoWeights,
-    yearWeights,
-    yearCounts,
-    yearPopulation,
-    yearSample,
-  ])
-    arr.fill(0);
-
-  // 1. Which diaries match the day type and person filters (one mask test on packed bits).
-  const from = state.from - data.firstYear,
-    to = state.to - data.firstYear;
-  let mask = 0,
-    match = 0;
-  for (const f of data.personFilters)
-    if (state.filters[f.id] !== undefined) {
-      mask |= ((1 << f.bits) - 1) << f.shift;
-      match |= state.filters[f.id] << f.shift;
-    }
-  if (state.day !== "all") {
-    mask |= 1;
-    match |= state.day === "weekend" ? 1 : 0;
-  }
-  let population = 0,
-    sample = 0;
-  for (let i = 0; i < weight.length; i++) {
-    if ((E.attrs[i] & mask) !== match) {
-      diaryState[i] = 0;
-      continue;
-    }
-    const y = E.year[i],
-      inRange = y >= from && y <= to;
-    diaryState[i] = inRange ? 2 : 1;
-    yearPopulation[y] += weight[i];
-    yearSample[y]++;
-    if (inRange) {
-      population += weight[i];
-      sample++;
-    }
-  }
-
-  // 2. Detailed activity curves, then categories as the sum of their detailed rows.
-  const whereOnly = state.filters.where ?? -1;
-  const whoBit = state.filters.who === undefined ? 0 : 1 << state.filters.who;
-  const passes = (e) => (whereOnly < 0 || where[e] === whereOnly) && (!whoBit || who[e] & whoBit);
-  const filtered = contextFiltered();
-  for (let k = E.nCategories; k < E.keys.length; k++) {
-    const base = k * STRIDE;
-    for (let e = keyStart[k]; e < keyStart[k + 1]; e++) {
-      const i = diary[e];
-      if (diaryState[i] !== 2 || (filtered && !passes(e))) continue;
-      const end = start[e] + duration[e];
-      addWeight(weights, base, start[e], end, weight[i]);
-      addCount(counts, base, start[e], end);
-    }
-  }
-  E.children.forEach((rows, p) => {
-    for (const k of rows) {
-      addRow(weights, p, k);
-      addRow(counts, p, k);
-    }
-  });
-
-  // 3. With location/company filters, "context" is everyone doing anything in that context.
-  const context = E.keyIndex.context;
-  if (filtered)
-    for (let p = 0; p < E.nCategories; p++) {
-      addRow(weights, context, p);
-      addRow(counts, context, p);
-    }
-
-  // 4. The selected activity: where, with whom, and its curve in every survey year.
-  // "Awake" uses sleep's episodes (it is only offered without context filters).
-  const selected = E.keyIndex[state.selected === "awake" ? "sleep" : state.selected];
-  let rows = [selected];
-  if (selected === context) rows = E.keys.map((_, k) => k).slice(E.nCategories);
-  else if (selected < E.nCategories) rows = E.children[selected];
-  for (const k of rows)
-    for (let e = keyStart[k]; e < keyStart[k + 1]; e++) {
-      const i = diary[e];
-      if (!diaryState[i]) continue;
-      const ok = !filtered || passes(e);
-      if (!ok) continue;
-      const end = start[e] + duration[e],
-        w = weight[i],
-        y = E.year[i];
-      addWeight(yearWeights, y * STRIDE, start[e], end, w);
-      addCount(yearCounts, y * STRIDE, start[e], end);
-      if (diaryState[i] !== 2) continue;
-      addWeight(whereWeights, where[e] * STRIDE, start[e], end, w);
-      const company = who[e];
-      if (!company) addWeight(whoWeights, nWho * STRIDE, start[e], end, w);
-      for (let b = 0; b < nWho; b++)
-        if (company & (1 << b)) addWeight(whoWeights, b * STRIDE, start[e], end, w);
-    }
-
-  accumulate(weights, E.keys.length + 1);
-  accumulate(counts, E.keys.length + 1);
-  accumulate(whereWeights, E.nWhere);
-  accumulate(whoWeights, nWho + 1);
-  accumulate(yearWeights, data.years.length);
-  accumulate(yearCounts, data.years.length);
-
-  E.days = 0;
-  for (let y = from; y <= to; y++) E.days += data.years[y].days[state.day];
-  E.population = population / E.days;
-  E.sample = sample;
+  computeEngine(engine, data, state);
 }
 
 // ---- Data lookup ----
 function value(id, m = state.minute) {
-  const E = engine;
-  if (id === "awake") {
-    const sleep = value("sleep", m);
-    return { count: Math.max(0, E.population - sleep.count), n: E.sample - sleep.n };
-  }
-  const base = E.keyIndex[id] * STRIDE + m;
-  return { count: Math.max(0, E.weights[base]) / E.days, n: E.counts[base] };
+  return engineValue(engine, id, m);
 }
 
 // ---- Formatting ----
@@ -384,6 +300,9 @@ function saveState() {
   for (const f of allFilters())
     if (state.filters[f.id] !== undefined) p.set(f.id, state.filters[f.id]);
   if (state.query) p.set("q", state.query);
+  // While the clock follows the device, links leave the time out, so whoever opens one sees
+  // their own local time. A time someone picked is kept.
+  if (state.following) p.delete("time");
   try {
     history.replaceState(null, "", "#" + p);
   } catch {}
@@ -439,13 +358,6 @@ function now() {
   stop();
   const d = new Date();
   changeMinute(d.getHours() * 60 + d.getMinutes(), true);
-}
-
-// Filters, years, day type, and the selected activity all need a new pass over the diaries.
-function recompute() {
-  compute();
-  render();
-  saveState();
 }
 
 // ---- Rendering ----
@@ -511,9 +423,12 @@ function matching() {
       (state.parent === "all" || a.parent === state.parent || a.id === state.parent) &&
       keywords(a).includes(state.query.trim().toLowerCase()),
   );
-  return list
-    .map((a) => ({ ...a, ...value(a.id) }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  return (
+    list
+      .map((a) => ({ ...a, ...value(a.id) }))
+      // Ranked by whole people (as shown), so every data source gives the same order.
+      .sort((a, b) => Math.round(b.count) - Math.round(a.count) || a.label.localeCompare(b.label))
+  );
 }
 
 function activityRow(a) {
@@ -547,7 +462,8 @@ function renderList() {
     ? visible.map(activityRow).join("")
     : '<div class="empty">No matching activities. Try a broader term or choose “All activities”.</div>';
   $("#load-more").hidden = list.length <= state.limit;
-  $("#load-more").textContent = `Show ${Math.max(0, Math.min(40, list.length - state.limit))} more activities ↓`;
+  $("#load-more").textContent =
+    `Show ${Math.max(0, Math.min(40, list.length - state.limit))} more activities ↓`;
   $("#list-note").textContent = detailed
     ? "Detailed rows split driving from other activity contexts. Amber dot = fewer than 30 observed diaries."
     : "17 categories cover these people. Select one to explore its day or see its detailed activities.";
@@ -581,13 +497,13 @@ function trend(id) {
     points.push(
       `${((m / 1439) * w).toFixed(2)},${(h - (values[m] / (max || 1)) * (h - 4)).toFixed(2)}`,
     );
-  points.push(`${w},${h - (values[1439] / (max || 1)) * (h - 4)}`);
+  points.push(`${w},${(h - (values[1439] / (max || 1)) * (h - 4)).toFixed(2)}`);
   return {
     max,
     peak,
     points: points.join(" "),
-    x: (state.minute / 1439) * w,
-    y: h - (values[state.minute] / (max || 1)) * (h - 4),
+    x: ((state.minute / 1439) * w).toFixed(2),
+    y: (h - (values[state.minute] / (max || 1)) * (h - 4)).toFixed(2),
   };
 }
 
@@ -611,7 +527,7 @@ function trendChart(a, t) {
 function breakdown(kind) {
   const E = engine,
     m = state.minute;
-  const total = Math.max(0, E.weights[E.keyIndex[state.selected] * STRIDE + m]);
+  const total = value(state.selected).count * E.days; // in the same units as the breakdowns
   if (!total) return [];
   let rows;
   if (kind === "where") {
@@ -723,17 +639,19 @@ function renderDetail() {
   const group = a.parent || a.id;
   const small = v.n < SMALL_SAMPLE;
   const derived = a.id === "awake" || a.id === "context";
+  const extras = hasExtras(); // location, company, and yearly trend follow a moment later
   const action = derived
     ? '<button id="awake-about" class="outline-button">About this estimate ↗</button>'
     : `<button id="drill-down" class="outline-button" data-group="${group}">${a.parent ? "More in this category" : "Explore detailed activities"} ↗</button>`;
   // Skip a breakdown that a filter already fixes (e.g. "At home" is 100% at home).
   const context =
-    a.id === "awake"
+    a.id === "awake" || !extras
       ? ""
       : ["where", "who"]
           .filter((kind) => state.filters[kind] === undefined)
           .map((kind) => breakdownBlock(kind, a))
           .join("");
+  const years = extras ? yearsChart(a) : "";
   $("#detail-content").innerHTML = `
     <div class="detail-heading" style="--color:${a.color}"><i class="dot"></i>${escapeHTML(scope)}${a.code ? " · " + a.code : ""}</div>
     <h2>${escapeHTML(a.label)}</h2>
@@ -756,7 +674,7 @@ function renderDetail() {
     </div>
     <p class="sample-status ${small ? "small-sample" : ""}">${sampleStatus(v)}</p>
     ${context}
-    ${yearsChart(a)}
+    ${years}
     <p class="detail-definition">${escapeHTML(detailDescription(a))}</p>
     <div class="detail-actions">
       ${action}
@@ -774,8 +692,7 @@ function renderDetail() {
       state.query = "";
       state.limit = 40;
       $("#search").value = "";
-      renderList();
-      saveState();
+      refreshList();
       $("#activity-browser").scrollIntoView({ block: "start", behavior: "smooth" });
     });
   else $("#awake-about").addEventListener("click", showAbout);
@@ -783,7 +700,9 @@ function renderDetail() {
 }
 
 function render() {
-  if (!engine) return;
+  if (!covers(engine)) return; // a moment before the numbers arrive
+  $("#loading").hidden = true;
+  $("#dashboard").hidden = false;
   renderClock();
   renderFilters();
   renderSummary();
@@ -795,7 +714,7 @@ function selectActivity(id) {
   if (!byId[id]) return;
   stop();
   state.selected = id;
-  recompute();
+  update();
   if (window.matchMedia("(max-width:700px)").matches)
     $("#detail-panel").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -830,7 +749,8 @@ function download(type) {
   for (const m of minutes)
     for (const id of ids) {
       const a = byId[id],
-        v = value(id, m);
+        v = value(id, m),
+        people = Math.round(v.count); // the percentage follows the rounded count it sits beside
       rows.push(
         [
           yearsLabel(),
@@ -839,8 +759,8 @@ function download(type) {
           isoTime(m),
           id,
           csvCell(a.label),
-          Math.round(v.count),
-          percent(v.count).toFixed(6),
+          people,
+          percent(people).toFixed(6),
           v.n,
           a.id === "awake"
             ? "derived_complement"
@@ -889,8 +809,7 @@ function buildControls() {
 async function init() {
   try {
     data = window.AMERICAN_MINUTE_DATA;
-    if (!data || data.schemaVersion !== 3) throw Error("Survey data unavailable");
-    $("#loading").textContent = `Unpacking ${data.diaries.toLocaleString()} diaries…`;
+    if (!data || data.schemaVersion !== 4) throw Error("Survey data unavailable");
     byId = Object.fromEntries(data.categories.map((a) => [a.id, a]));
     for (const a of data.details) {
       a.color = byId[a.parent].color;
@@ -910,17 +829,14 @@ async function init() {
       description:
         "Everyone doing any activity that matches the location and company filters at this minute. Sleeping, grooming, and private activities are excluded because BLS doesn’t record where or with whom they happen.",
     };
-    engine = buildEngine(await inflate(data.diaryData));
     loadState();
     buildControls();
     $("#search").value = state.query;
-    compute();
-    $("#loading").hidden = true;
-    $("#dashboard").hidden = false;
-    render();
+    await update();
   } catch (e) {
     $("#loading").textContent =
-      "The survey data could not be loaded. Keep data.js with this page, or open the standalone american-minute.html file in a current browser.";
+      "The survey data could not be loaded. Serve the dist folder over HTTP, or open the standalone american-minute.html file in a current browser.";
+    $("#loading").hidden = false;
     console.error(e);
   }
 }
@@ -955,7 +871,7 @@ $$("[data-day]").forEach((b) =>
     if (!engine) return;
     stop();
     state.day = b.dataset.day;
-    recompute();
+    update();
   }),
 );
 document.addEventListener("change", (e) => {
@@ -964,12 +880,12 @@ document.addEventListener("change", (e) => {
   stop();
   if (e.target.value === "") delete state.filters[id];
   else state.filters[id] = Number(e.target.value);
-  recompute();
+  update();
 });
 $("#reset-filters").addEventListener("click", () => {
   stop();
   state.filters = {};
-  recompute();
+  update();
 });
 $$("[data-mode]").forEach((b) =>
   b.addEventListener("click", () => {
@@ -978,22 +894,19 @@ $$("[data-mode]").forEach((b) =>
     state.query = "";
     state.limit = 40;
     $("#search").value = "";
-    renderList();
-    saveState();
+    refreshList();
   }),
 );
 $("#category-filter").addEventListener("change", (e) => {
   state.parent = e.target.value;
   state.mode = state.parent === "all" ? state.mode : "detail";
   state.limit = 40;
-  renderList();
-  saveState();
+  refreshList();
 });
 $("#search").addEventListener("input", (e) => {
   state.query = e.target.value;
   state.limit = 40;
-  renderList();
-  saveState();
+  refreshList();
 });
 $("#unit").addEventListener("click", () => {
   state.unit = state.unit === "people" ? "percent" : "people";
@@ -1026,8 +939,15 @@ $("#about-dialog").addEventListener("click", (e) => {
   if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
     e.currentTarget.close();
 });
-$("#download-snapshot").addEventListener("click", () => {
-  if (engine) download("snapshot");
+$("#download-snapshot").addEventListener("click", async () => {
+  if (!covers(engine)) return;
+  // The snapshot lists every activity, so a view without the detailed rows fetches them first.
+  if (engine.partial && !engine.allRows) {
+    const all = viewEngine(await fetchView("view", { rows: "all" }), state.day, state.filters);
+    for (const k of DETAIL_FIELDS) all[k] = engine[k];
+    engine = all;
+  }
+  download("snapshot");
 });
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) stop();
