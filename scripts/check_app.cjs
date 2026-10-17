@@ -199,6 +199,35 @@ const comparePaths = (s) =>
   for (const id of ["#summary", "#activity-list", "#detail-content"])
     assert.equal(offline.nodes[id].innerHTML, shared.nodes[id].innerHTML, `fallback ${id}`);
 
+  // ---- Static pages for search and AI crawlers: every sitemap URL exists, every link between
+  // pages resolves, structured data parses, and the numbers match the app.
+  const dist = (u) => path.join(root, "dist", u === "/" ? "index.html" : u.slice(1) + ".html");
+  const sitemap = fs.readFileSync(path.join(root, "dist/sitemap.xml"), "utf8");
+  const urls = [
+    ...sitemap.matchAll(/<loc>https:\/\/www\.americantimeuse\.com(\/[^<]*)<\/loc>/g),
+  ].map((m) => m[1]);
+  assert.equal(urls.length, 44, "home, 16 activities, 24 hours, two indexes, and the FAQ");
+  for (const u of urls) {
+    const page = fs.readFileSync(dist(u), "utf8");
+    for (const [, href] of page.matchAll(/href="(\/[^"#]*)"/g))
+      if (!/\.(css|svg|png)$/.test(href))
+        assert(fs.existsSync(dist(href)), `${u} links to ${href}`);
+    for (const [, json] of page.matchAll(/<script type="application\/ld\+json">([^<]*)<\/script>/g))
+      JSON.parse(json);
+    assert.match(page, /<link rel="canonical" href="https:\/\/www\.americantimeuse\.com/);
+  }
+  const threePm = fs.readFileSync(dist("/hours/3-pm"), "utf8");
+  await run("useDiaries()");
+  run(
+    'state.filters = {}; state.day = "weekday"; [state.from, state.to] = [2003, 2025]; compute()',
+  );
+  const working = (100 * run("value('work', 900).count / engine.population")).toFixed(1);
+  assert(threePm.includes(`At 3 PM on an average weekday, ${working}% of Americans`), working);
+  assert.match(
+    fs.readFileSync(path.join(root, "dist/robots.txt"), "utf8"),
+    /Allow: \/\nDisallow: \/api\//,
+  );
+
   // ---- The same page from either source: every number, label, and percentage, in both units.
   await run("useDiaries()");
   for (const s of [

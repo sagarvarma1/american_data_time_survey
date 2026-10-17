@@ -229,9 +229,30 @@ The deployed data contains public-use diary episodes with no case identifiers, o
 year, day type, the four demographic groups, and each episode’s duration, activity, location group,
 and companion groups. BLS publishes far more detail in the same public-use files.
 
+## Search and AI visibility
+
+The app draws its numbers with JavaScript, which Google and Bing render but most AI crawlers
+(GPTBot, ClaudeBot, PerplexityBot) don't: they read only the HTML. So `scripts/build_pages.cjs`
+(run by `build_data.py`) writes static pages with the numbers in the HTML, from the same views as
+the app:
+
+- `/activities/<category>`: when each of 16 activities happens, with a direct answer first, an
+  inline chart, an hour-by-hour table (weekdays and weekends), and what the category includes.
+- `/hours/<1-am … 11-pm>`: what Americans are doing at each hour, with every category and the ten
+  most common detailed activities.
+- `/faq`: bedtime, waking, sleep, meals, rush hour, work, TV, and data questions (`FAQPage`
+  markup).
+- The homepage's "Explore" section (between the `explore` markers in `index.html`), a `Dataset`
+  and `WebSite` description in JSON-LD, `sitemap.xml`, and `robots.txt` (everything allowed except
+  `/api/`). Pages link to each other and deep-link into the app.
+
+`cleanUrls` in `vercel.json` serves `/faq` from `faq.html`. All canonical URLs use
+`https://www.americantimeuse.com`, the domain that serves the site. The tests check every sitemap
+URL and internal link, parse every JSON-LD block, and compare a page's numbers with the app.
+
 ## Hosting
 
-Deployed on Vercel at [americantimeuse.com](https://americantimeuse.com). `vercel.json` serves
+Deployed on Vercel at [americantimeuse.com](https://www.americantimeuse.com). `vercel.json` serves
 `dist/` with no build step, deploys `api/view.js` and `api/detail.js` as functions (bundling the
 diary file, `data.js`, and `engine.js`), and caches `dist/diaries/` permanently. Every push to
 `main` redeploys, and Vercel clears its CDN cache for the new deployment. A new server instance

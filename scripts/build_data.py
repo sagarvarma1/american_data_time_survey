@@ -353,6 +353,7 @@ def build():
         "window.AMERICAN_MINUTE_DATA=" + json.dumps(payload, separators=(",", ":")) + ";\n"
     )
     subprocess.run(["node", str(ROOT / "scripts/build_preview.cjs")], check=True)
+    subprocess.run(["node", str(ROOT / "scripts/build_pages.cjs")], check=True)
     (ROOT / "data/validation.json").write_text(json.dumps(validation, indent=2) + "\n")
     print(
         json.dumps(

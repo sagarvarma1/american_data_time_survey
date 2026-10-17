@@ -34,6 +34,8 @@ html = inline(
     r'<link rel="stylesheet" href="styles\.css"\s*/?>',
     "<style>" + (DIST / "styles.css").read_text() + "</style>",
 )
+# The Explore links point to the website's pages, which the offline file doesn't have.
+html = inline(html, r"<!-- explore:start[\s\S]*?<!-- explore:end -->", "")
 html = inline(html, r'<link rel="icon" href="icon\.svg"[^>]*>\s*', "")
 html = inline(html, r'<link rel="apple-touch-icon" href="apple-touch-icon\.png"[^>]*>\s*', "")
 html = inline(html, r'<script src="data\.js" defer></script>\s*', "")
